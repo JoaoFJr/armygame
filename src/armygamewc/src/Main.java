@@ -8,98 +8,183 @@ import javax.swing.SwingUtilities;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
 
 
 
-public class Main extends JFrame {
+public class Main extends JFrame implements Runnable{
 
-	private JPanel menuPanel;
-	private ArmyGame game;
-	private Chat 	chat;
-	private JMenuBar menuBar;
-	private ServerSide server;
+	public static JPanel menuPanel;
+	public static JMenu menu;
+	public static JMenuItem sMenuItem;
+	public static JMenuItem cMenuItem;
+	public static JMenuItem stopMenu;
+	public static JMenu startGame;
+	public static ArmyGame game;
+	public static Chat 	chat;
+	public static JMenuBar menuBar;
+	public static ConnectionSide connectionSide = new ConnectionSide();
+	public final static Main application = new Main();
+	public static int previousState = connectionSide.connectionStatus;
 	
 	public Main()
 	{
 		super("Combate Game");
-		SwingUtilities.invokeLater(new Runnable()
+		initGui();
+						
+	}
+	public void initGui()
+	{
+		setLayout(new BorderLayout());
+		menuPanel = new JPanel();
+		game = new ArmyGame();
+		menuBar = new JMenuBar();
+		chat = new Chat();
+	
+		add(menuPanel, BorderLayout.NORTH);
+		add(game , BorderLayout.CENTER);
+		add(chat , BorderLayout.SOUTH);
+		pack();
+		
+		setResizable(false);
+		setLocationRelativeTo(null);
+		setVisible(true);
+		
+		menu = new JMenu("Game");
+		startGame = new JMenu("Start Game");
+		sMenuItem = new JMenuItem("as Server");
+		cMenuItem = new JMenuItem("as Client");
+		stopMenu = new JMenuItem("Stop");
+		stopMenu.setEnabled(false);
+		
+		sMenuItem.addActionListener(new ActionListener() 
 		{
-			public void run()
-			{
-				setLayout(new BorderLayout());
-				menuPanel = new JPanel();
-				game = new ArmyGame();
-				menuBar = new JMenuBar();
-				chat = new Chat();
+			
+			public void actionPerformed(ActionEvent e) {
+			//	connectionSide.runServer();
+			//	chat.setOutput(connectionSide.getOutput());
+			//	startGame.setEnabled(false);
+			//	stopMenu.setEnabled(true);
 				
-				add(menuPanel, BorderLayout.NORTH);
-				add(game , BorderLayout.CENTER);
-				add(chat , BorderLayout.SOUTH);
-				pack();
+				System.out.println("Iniciar como servidor: "+e.getActionCommand());
+				ConnectionSide.connectionStatus = ConnectionSide.BEGIN_CONNECT;
+				ConnectionSide.isHost = true;
 				
-				setResizable(false);
-				setLocationRelativeTo(null);
-				setVisible(true);
-				
-				JMenu menu = new JMenu("Game");
-				final JMenu startGame = new JMenu("Start Game");
-				JMenuItem sMenuItem = new JMenuItem("as Server");
-				JMenuItem cMenuItem = new JMenuItem("as Client");
-				final JMenuItem stopMenu = new JMenuItem("Stop");
-				stopMenu.setEnabled(false);
-				
-				sMenuItem.addActionListener(new ActionListener() 
-				{
+				Runnable myRunnable = new Runnable() {
 					
-					public void actionPerformed(ActionEvent e) {
-
-						System.out.println("Start as server: "+e.getActionCommand());
-						startGame.setEnabled(false);
-						stopMenu.setEnabled(true);
+					@Override
+					public void run() {
+						// TODO Auto-generated method stub
+						connectionSide.runServer();
+						
 					}
-				});
+				};
+				Thread myThread = new Thread(myRunnable);
+				myThread.start();
 				
-				cMenuItem.addActionListener(new ActionListener()
-				{
-					public void actionPerformed(ActionEvent e)
-					{
-						System.out.println("Start as client: "+e.getActionCommand());
-						//connectToSocket();
-					}
-				});
+				//SwingUtilities.invokeLater(connectionSide);
+				SwingUtilities.invokeLater(application);
 				
-				stopMenu.addActionListener(new ActionListener()
-				{
-					public void actionPerformed(ActionEvent e)
-					{
-						System.out.println("Connection attempt stopped");
-						startGame.setEnabled(true);
-						stopMenu.setEnabled(false);
-					}
-				});
-				
-				startGame.add(sMenuItem);
-				startGame.add(cMenuItem);
-				menu.add(startGame);
-				menu.add(stopMenu);
-				menuBar.add(menu);
-				setJMenuBar(menuBar);
-				setDefaultCloseOperation(EXIT_ON_CLOSE);
 			}
 		});
 		
+		cMenuItem.addActionListener(new ActionListener()
+		{
+			public void actionPerformed(ActionEvent e)
+			{
+				System.out.println("Iniciar como cliente: "+e.getActionCommand());
+				ConnectionSide.connectionStatus = ConnectionSide.BEGIN_CONNECT;
+				ConnectionSide.isHost = false;
+				Runnable myRunnable = new Runnable()
+				{
+					public void run()
+					{
+						connectionSide.runClient();
+					}
+				};
+				Thread myThread = new Thread(myRunnable);
+				myThread.start();
+				SwingUtilities.invokeLater(connectionSide);
+			}
+		});
 		
+		stopMenu.addActionListener(new ActionListener()
+		{
+			public void actionPerformed(ActionEvent e)
+			{
+				System.out.println("Connection attempt stopped");
+				ConnectionSide.connectionStatus = ConnectionSide.DISCONNECTING;
+				connectionSide.cleanConnection();
+				SwingUtilities.invokeLater(connectionSide);
+			}
+		});
 		
-		
-		
-		
+		startGame.add(sMenuItem);
+		startGame.add(cMenuItem);
+		menu.add(startGame);
+		menu.add(stopMenu);
+		menuBar.add(menu);
+		setJMenuBar(menuBar);
+		setDefaultCloseOperation(EXIT_ON_CLOSE);	
+
 	}
 	
 	public static void main (String args[])
 	{
-		Main m = new Main();
-		
-		System.out.println("Main method is running");
+		 while (true) {
+	         try { // Poll every ~10 ms
+	            Thread.sleep(10);
+	         }
+	         catch (InterruptedException e) {}
+	         SwingUtilities.invokeLater(application);
+		 }
+	}
+	@Override
+	public void run() {
+		switch(ConnectionSide.connectionStatus)
+		{
+			case ConnectionSide.DISCONNECTED:
+				startGame.setEnabled(true);
+				previousState = ConnectionSide.DISCONNECTED;
+				break;
+			case ConnectionSide.BEGIN_CONNECT:
+				if(previousState != ConnectionSide.BEGIN_CONNECT)
+				{
+					if(connectionSide.isHost)
+						chat.displayMessage("Aguardando conexão com o jogador cliente...\n");
+					else
+						chat.displayMessage("Procurando conexão com o servidor...\n");
+				}
+				startGame.setEnabled(false);
+				stopMenu.setEnabled(true);
+				previousState = ConnectionSide.BEGIN_CONNECT;
+				break;
+			case ConnectionSide.CONNECTED:
+				if(previousState != ConnectionSide.CONNECTED)
+					chat.displayMessage("Conectado!");
+				startGame.setEnabled(false);
+				stopMenu.setEnabled(true);
+				chat.chatTextField.setEditable(true);
+				
+				previousState = ConnectionSide.CONNECTED;
+				break;
+			case ConnectionSide.DISCONNECTING:
+				previousState = ConnectionSide.DISCONNECTING;
+				break;
+			case ConnectionSide.NULL:
+				break;
+			default:
+				break;
+		}
+		application.repaint();
 		
 	}
 }
