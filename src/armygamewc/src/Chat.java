@@ -7,13 +7,16 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 import javax.swing.*;
+import javax.swing.text.DefaultCaret;
 
 
 public class Chat extends JPanel
 {
 	public JTextField chatTextField;
 	public JTextArea chatTextArea;
-	private ObjectOutputStream output = null;
+	public ObjectOutputStream output = null;
+	public  StringBuffer toAppend = new StringBuffer("");
+	public  StringBuffer toSend = new StringBuffer("");
 	
 	public Chat()
 	{
@@ -25,30 +28,38 @@ public class Chat extends JPanel
 			{
 				chatTextField = new JTextField();
 				chatTextField.setEditable(false);
+				chatTextField.addActionListener(new ActionAdapter() {
+		            public void actionPerformed(ActionEvent e) {
+		                String s = chatTextField.getText();
+		                if (!s.equals("")) {
+		                  appendToChatBox("VOCÊ: " + s + "\n");
+		                   chatTextField.selectAll();
+
+		                   // Send the string
+		                   sendString(s);
+		                }
+		             }
+		          });
 				chatTextField.addActionListener(new ActionListener() 
 				{
 					public void actionPerformed(ActionEvent e)
 					{
-						if(output != null)
-						{
-							try
-							{
-								output.writeObject(e.getActionCommand());
-								System.out.println("Saiu: "+ e.getActionCommand());
-							}
-							catch(IOException ioe)
-							{
-								ioe.printStackTrace();
-							}
-						//sendData(e.getActionCommand());
-						}
+						String s = chatTextField.getText();
+						
+		                if (!s.equals(""))
+		                {
+		                	appendToChatBox("VOCÊ: " + s + "\n");
+		                	chatTextField.selectAll();
+		                	// Send the string
+		                	sendString(s);
+		                }
 						chatTextField.setText("");
 					}
 				});
 				
 				chatTextArea = new JTextArea();
 				chatTextArea.setEditable(false);
-				
+				chatTextArea.setAutoscrolls(true);
 				setPreferredSize(new Dimension (800, 100));
 				setLayout(new BorderLayout());
 				
@@ -57,8 +68,23 @@ public class Chat extends JPanel
 			}
 		});
 		
-		
 	}
+
+	   // Acrescenta o texto ao chatbox
+	   private void appendToChatBox(String s) {
+	      synchronized (toAppend) {
+	         toAppend.append(s);
+	      }
+	   }
+
+	   /////////////////////////////////////////////////////////////////
+
+	   // Acrescenta o texto ao buffer de envio
+	   private  void sendString(String s) {
+	      synchronized (toSend) {
+	         toSend.append(s + "\n");
+	      }
+	   }
 	
 	public void setOutput(ObjectOutputStream newOutput)
 	{
@@ -69,4 +95,5 @@ public class Chat extends JPanel
 		chatTextArea.append(msgToDisplay);
 		
 	}
+
 }

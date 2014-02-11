@@ -36,10 +36,11 @@ public class ConnectionSide implements Runnable
 	public static ServerSocket server ;
 	public static Socket connection;
 	public static int counter = 1; 
-	public static ObjectOutputStream output;
-	public static ObjectInputStream input;
+	public  ObjectOutputStream output;
+	public static  ObjectInputStream input;
 	
 	public static String message;
+	public static String toShow;
 	
 	
 	public ObjectOutputStream getOutput()
@@ -51,9 +52,8 @@ public class ConnectionSide implements Runnable
 	{
 		try
 		{
-			output.writeObject("SERVER >>> " + message);
+			output.writeObject(message);
 			output.flush();
-			//displayMessage("\nSERVER >>> " + message);
 		}
 		catch(IOException ioException)
 		{
@@ -64,7 +64,7 @@ public class ConnectionSide implements Runnable
 	public void runServer()
 	{
 		try{
-				server = new ServerSocket(ConnectionSide.PORT, 2);
+				server = new ServerSocket(ConnectionSide.PORT, 1);
 				
 				try
 				{
@@ -144,15 +144,15 @@ public class ConnectionSide implements Runnable
 
 	private void processConnection() throws IOException
 	{
-		message=  "Connection Successful";
+		message=  "Connection Successful\n";
 		sendData(message);
 		
 		do
 		{
 			try
 			{
-				message = (String)input.readObject();
-				System.out.println(message); //debug purpose
+				message = input.readObject().toString();
+				toShow = message;
 				connectionStatus = CONNECTED;
 			}
 			catch(ClassNotFoundException cnfe)
@@ -183,7 +183,7 @@ public class ConnectionSide implements Runnable
 	}
 	
 	
-	public static void cleanConnection()
+	public  void cleanConnection()
 	{
 	      try
 	      {

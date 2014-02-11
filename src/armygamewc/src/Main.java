@@ -18,7 +18,7 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-
+//TODO layeredpane
 
 public class Main extends JFrame implements Runnable{
 
@@ -33,11 +33,12 @@ public class Main extends JFrame implements Runnable{
 	public static JMenuBar menuBar;
 	public static ConnectionSide connectionSide = new ConnectionSide();
 	public final static Main application = new Main();
-	public static int previousState = connectionSide.connectionStatus;
+	public static int previousState = ConnectionSide.connectionStatus;
 	
 	public Main()
 	{
 		super("Combate Game");
+		
 		initGui();
 						
 	}
@@ -149,31 +150,56 @@ public class Main extends JFrame implements Runnable{
 	}
 	@Override
 	public void run() {
+		
+		// Lógica de funcionamento da aplicação, de acordo com o estado atual do jogo.
 		switch(ConnectionSide.connectionStatus)
 		{
 			case ConnectionSide.DISCONNECTED:
 				startGame.setEnabled(true);
+				stopMenu.setEnabled(false);
+				chat.chatTextField.setEditable(false);
 				previousState = ConnectionSide.DISCONNECTED;
 				break;
 			case ConnectionSide.BEGIN_CONNECT:
 				if(previousState != ConnectionSide.BEGIN_CONNECT)
 				{
-					if(connectionSide.isHost)
+					if(ConnectionSide.isHost)
 						chat.displayMessage("Aguardando conexão com o jogador cliente...\n");
 					else
 						chat.displayMessage("Procurando conexão com o servidor...\n");
 				}
 				startGame.setEnabled(false);
 				stopMenu.setEnabled(true);
+				chat.chatTextField.setEditable(false);
 				previousState = ConnectionSide.BEGIN_CONNECT;
 				break;
 			case ConnectionSide.CONNECTED:
 				if(previousState != ConnectionSide.CONNECTED)
-					chat.displayMessage("Conectado!");
+					chat.displayMessage("Conectado!\n---------------------------------\n");
 				startGame.setEnabled(false);
 				stopMenu.setEnabled(true);
 				chat.chatTextField.setEditable(true);
-				
+				if (chat.toSend.length() != 0) {
+					try
+					{
+					  connectionSide.output.writeObject((String)chat.toSend.toString());
+	                  connectionSide.output.flush();
+	                  chat.toSend.setLength(0);
+					}
+					catch(IOException ioe)
+					{
+						ioe.printStackTrace();
+					}
+	            }
+				if(ConnectionSide.toShow.length()!=0)
+				{
+					chat.chatTextArea.append("RIVAL: "+ConnectionSide.toShow);
+					ConnectionSide.toShow = "";
+				}
+				// Atualizar o panel do jogo!
+				//
+				//
+				//
 				previousState = ConnectionSide.CONNECTED;
 				break;
 			case ConnectionSide.DISCONNECTING:
@@ -184,7 +210,12 @@ public class Main extends JFrame implements Runnable{
 			default:
 				break;
 		}
-		application.repaint();
+		if(chat.toAppend.length() != 0)
+			chat.chatTextArea.append(chat.toAppend.toString());
+		chat.chatTextArea.setCaretPosition(chat.chatTextArea.getDocument().getLength());
+		//System.out.println(chat.toAppend +"s");
+		chat.toAppend.setLength(0);
+		//application.repaint();
 		
 	}
 }
