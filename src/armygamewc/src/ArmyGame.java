@@ -41,9 +41,6 @@ public class ArmyGame extends JPanel implements Runnable {
 		createPiecesRed();
 		
 		
-		
-		
-		
 		sidePanel = new JPanel();
 		sidePanel.setPreferredSize(new Dimension(200 , 600));
 		
@@ -169,7 +166,6 @@ public class ArmyGame extends JPanel implements Runnable {
 			switch(currentState)
 			{
 				case PREGAME:
-					
 					break;
 				case DURINGGAME:
 					updatePieces();
@@ -186,5 +182,3 @@ public class ArmyGame extends JPanel implements Runnable {
 		
 	}
 }
-
-
