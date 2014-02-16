@@ -145,6 +145,7 @@ public class Main extends JFrame implements Runnable{
 	            Thread.sleep(10);
 	         }
 	         catch (InterruptedException e) {}
+	         SwingUtilities.invokeLater(game);
 	         SwingUtilities.invokeLater(application);
 		 }
 	}
@@ -210,6 +211,8 @@ public class Main extends JFrame implements Runnable{
 			default:
 				break;
 		}
+		
+		
 		if(chat.toAppend.length() != 0)
 			chat.chatTextArea.append(chat.toAppend.toString());
 		chat.chatTextArea.setCaretPosition(chat.chatTextArea.getDocument().getLength());
