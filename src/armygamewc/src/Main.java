@@ -1,4 +1,5 @@
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -176,7 +177,34 @@ public class Main extends JFrame implements Runnable{
 				break;
 			case ConnectionSide.CONNECTED:
 				if(previousState != ConnectionSide.CONNECTED)
+				{
 					chat.displayMessage("Conectado!\n---------------------------------\n");
+					if(ConnectionSide.isHost)
+					{
+						game.createPiecesRed();
+						game.createPiecesBlue();
+						game.addPiecesToPanel();
+						game.addPiecesToSidePanel();
+						for(int i = 0 ; i < 12 ; i++)
+						{
+							game.your_pieces[i].setVisible(true);
+							game.rival_pieces[i].setVisible(true);
+						}
+					}
+					else
+					{
+						game.createPiecesBlue();
+						game.createPiecesRed();
+						game.addPiecesToPanel();
+						game.addPiecesToSidePanel();
+						for(int i = 0 ; i < 12 ; i++)
+						{
+							game.your_pieces[i].setVisible(true);
+							game.rival_pieces[i].setVisible(true);
+						}
+					}
+					
+				}
 				startGame.setEnabled(false);
 				stopMenu.setEnabled(true);
 				chat.chatTextField.setEditable(true);

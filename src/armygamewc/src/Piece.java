@@ -9,17 +9,26 @@ import javax.swing.GroupLayout.Alignment;
 import javax.swing.ImageIcon;
 public class Piece
 {
-	public static enum PATENTE { BANDEIRA , ESPIAO , SOLDADO , CABOARMEIRO ,
-		SARGENTO , TENENTE , CAPITAO , MAJOR , CORONEL , GENERAL , MARECHAL , BOMBA
-	}
+	public static final int BANDEIRA = 0;
+	public static final int ESPIAO = 1;
+	public static final int SOLDADO = 2;
+	public static final int CABOARMEIRO = 3;
+	public static final int SARGENTO = 4;
+	public static final int TENENTE = 5;
+	public static final int CAPITAO = 6;
+	public static final int MAJOR = 7;
+	public static final int CORONEL = 8;
+	public static final int GENERAL = 9;
+	public static final int MARECHAL = 10;
+	public static final int BOMBA = 11;
 	public static enum TEAM { RED , BLUE };
 	
 	public static Piece highlighted = null;
-	PATENTE id;
+	int id;
 	TEAM team;
-	public boolean live;
-	public int squaresx = -1;
-	public int squaresy = -1;
+	public boolean live = false;
+	public int squaresx = 1;
+	public int squaresy = 1;
 	public float x;
 	public float y;
 	public float velx;
@@ -33,7 +42,7 @@ public class Piece
 	public boolean selected = false;
 	public boolean clickedOn = false;
 	
-	public Piece(PATENTE p , TEAM t , ImageIcon im)
+	public Piece(int p , TEAM t , ImageIcon im)
 	{
 		id = p;
 		team = t;
@@ -133,7 +142,6 @@ public class Piece
 				
 			}
 		});
-		live = true;
 		
 	}
 	
