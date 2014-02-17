@@ -42,6 +42,7 @@ public class ArmyGame extends JPanel implements Runnable {
 	
 	public boolean updateRival = false;
 	public static boolean myTurn = false;
+	public static boolean finishedTurn = false;
 	
 	public static JLayeredPane sidePanel;
 	
@@ -88,14 +89,72 @@ public class ArmyGame extends JPanel implements Runnable {
 		down_lbl = new JLabel(down_icon);
 		right_lbl = new JLabel(right_icon);
 		left_lbl = new JLabel(left_icon);
-		up_lbl.setBounds(200, 0 , up_icon.getIconWidth() , up_icon.getIconHeight());
-		down_lbl.setBounds(200, 0 , down_icon.getIconWidth() , down_icon.getIconHeight());
-		right_lbl.setBounds(200, 0 , right_icon.getIconWidth() , right_icon.getIconHeight());
-		left_lbl.setBounds(200, 0 , left_icon.getIconWidth() , left_icon.getIconHeight());
+		up_lbl.setBounds(-50, 0 , up_icon.getIconWidth() , up_icon.getIconHeight());
+		down_lbl.setBounds(-50, 0 , down_icon.getIconWidth() , down_icon.getIconHeight());
+		right_lbl.setBounds(-50, 0 , right_icon.getIconWidth() , right_icon.getIconHeight());
+		left_lbl.setBounds(-50, 0 , left_icon.getIconWidth() , left_icon.getIconHeight());
 		up_lbl.setVisible(true);
 		down_lbl.setVisible(true);
 		right_lbl.setVisible(true);
 		left_lbl.setVisible(true);
+		
+		MouseListener ml = new MouseListener() {
+			
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void mousePressed(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void mouseExited(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void mouseEntered(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				Component c;
+				c = e.getComponent();
+				
+				if(c == up_lbl)
+				{
+					Piece.highlighted.squaresy --;
+				}
+				else if(c == down_lbl )
+				{
+					Piece.highlighted.squaresy ++;
+				}
+				if(c == right_lbl)
+				{
+					Piece.highlighted.squaresx ++;
+				}
+				else if(c == left_lbl)
+				{
+					Piece.highlighted.squaresx --;
+				}
+				
+			}
+		};
+		
+		up_lbl.addMouseListener(ml);
+		down_lbl.addMouseListener(ml);
+		right_lbl.addMouseListener(ml);
+		left_lbl.addMouseListener(ml);
+		
+		
 		fieldPane.add(up_lbl , new Integer(4));
 		fieldPane.add(down_lbl , new Integer(4));
 		fieldPane.add(right_lbl , new Integer(4));
@@ -166,7 +225,7 @@ public class ArmyGame extends JPanel implements Runnable {
 		{
 			if((arrayOfPieces.get(i).squaresx == tab_x)&&(arrayOfPieces.get(i).squaresy == tab_y))
 				return false;
-			else if(((tab_x == 2)||(tab_x==3))&&((tab_y == 4)||(tab_y==5))) // lake positions
+			else if(((tab_x == 2)||(tab_x==3)||(tab_x==6)||(tab_x==7))&&((tab_y == 4)||(tab_y==5))) // lake positions
 			{
 				return false;
 			}
@@ -199,9 +258,7 @@ public class ArmyGame extends JPanel implements Runnable {
 		
 		sel_frame_img = new ImageIcon(getClass().getResource("frame.png"));
 		sel_frame_lbl = new JLabel(sel_frame_img);
-		
 		sel_frame_lbl.setVisible(false);
-		
 		sidePanel.add(sel_frame_lbl , new Integer(17));
 	}
 	
@@ -348,7 +405,6 @@ public class ArmyGame extends JPanel implements Runnable {
 							default:
 								break;
 						}
-						
 					}
 				});
 				
@@ -508,22 +564,61 @@ public class ArmyGame extends JPanel implements Runnable {
 	
 	public void showButtons(boolean[] movements)
 	{
-		Piece p = Piece.highlighted;
-		if(movements[0])
+		Rectangle r = Piece.highlighted.label.getBounds();
+		if((Piece.highlighted.id != Piece.BOMBA)&&(Piece.highlighted.id != Piece.BANDEIRA))
 		{
-			up_lbl.setBounds(p.squaresx * SQFX , p.squaresy * SQFY , up_icon.getIconWidth() , up_icon.getIconHeight());
+			if(movements[0])
+			{
+				up_lbl.setBounds(r.x - (up_icon.getIconWidth()-Piece.highlighted.image.getIconWidth())/2 , r.y - up_icon.getIconHeight() , up_icon.getIconWidth() , up_icon.getIconHeight());
+				up_lbl.setVisible(true);
+			}
+			else
+			{
+				up_lbl.setVisible(false);
+				up_lbl.setBounds(-50, 0 , up_icon.getIconWidth() , up_icon.getIconHeight());
+			}
+		
+			if(movements[1])
+			{
+				down_lbl.setBounds(r.x - (down_icon.getIconWidth()-Piece.highlighted.image.getIconWidth())/2, r.y + Piece.highlighted.image.getIconHeight() , down_icon.getIconWidth() , down_icon.getIconHeight());
+				down_lbl.setVisible(true);
+			}
+			else
+			{
+				down_lbl.setVisible(false);
+				down_lbl.setBounds(-50, 0 , down_icon.getIconWidth() , down_icon.getIconHeight());
+			}
+			if(movements[2])
+			{
+				right_lbl.setBounds(r.x+Piece.highlighted.image.getIconWidth() , r.y - (right_icon.getIconHeight()-Piece.highlighted.image.getIconHeight())/2  , right_icon.getIconWidth() , right_icon.getIconHeight());
+				right_lbl.setVisible(true);
+			}
+			else
+			{
+				right_lbl.setVisible(false);
+				right_lbl.setBounds(-50, 0 , right_icon.getIconWidth() , right_icon.getIconHeight());
+			}
+			if(movements[3])
+			{
+				left_lbl.setBounds(r.x-left_icon.getIconWidth() , r.y - (left_icon.getIconHeight()-Piece.highlighted.image.getIconHeight())/2, left_icon.getIconWidth() , left_icon.getIconHeight());
+				left_lbl.setVisible(true);
+			}
+			else
+			{
+				left_lbl.setVisible(false);
+				left_lbl.setBounds(-50, 0 , left_icon.getIconWidth() , left_icon.getIconHeight());
+			}
 		}
-		if(movements[1])
+		else
 		{
-			down_lbl.setBounds(p.squaresx * SQFX , p.squaresy * SQFY , down_icon.getIconWidth() , down_icon.getIconHeight());
-		}
-		if(movements[2])
-		{
-			right_lbl.setBounds(p.squaresx * SQFX , p.squaresy * SQFY , right_icon.getIconWidth() , right_icon.getIconHeight());
-		}
-		if(movements[3])
-		{
-			left_lbl.setBounds(p.squaresx * SQFX , p.squaresy * SQFY , left_icon.getIconWidth() , left_icon.getIconHeight());
+			up_lbl.setVisible(false);
+			up_lbl.setBounds(-50, 0 , up_icon.getIconWidth() , up_icon.getIconHeight());
+			down_lbl.setVisible(false);
+			down_lbl.setBounds(-50, 0 , down_icon.getIconWidth() , down_icon.getIconHeight());
+			right_lbl.setVisible(false);
+			right_lbl.setBounds(-50, 0 , right_icon.getIconWidth() , right_icon.getIconHeight());
+			left_lbl.setVisible(false);
+			left_lbl.setBounds(-50, 0 , left_icon.getIconWidth() , left_icon.getIconHeight());
 		}
 	}
 	
@@ -562,7 +657,14 @@ public class ArmyGame extends JPanel implements Runnable {
 			retorno[1] = tabIsFree(x, y + 1);
 		else
 			retorno[1] = false;
-		
+		if(x+1 < 10)
+			retorno[2] = tabIsFree(x+1 , y);
+		else
+			retorno[2] = false;
+		if(x-1 >= 0)
+			retorno[3] = tabIsFree(x-1 , y);
+		else
+			retorno[3] = false;
 		return retorno;
 	}
 	
