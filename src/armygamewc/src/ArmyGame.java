@@ -13,9 +13,8 @@ public class ArmyGame extends JPanel implements Runnable {
 	public final static int DURINGGAME = 1;
 	public final static int FINISHINGGAME = 2;
 	public final static int PAUSED = 3;
-	
-	public final static int CLIENT = 0;
-	public final static int HOST = 1;
+	public final static int MOVING = 0;
+	public final static int ATTACKING = 1;
 	
 	public final static int SQFX = 80;
 	public final static int SQFY = 50;
@@ -24,6 +23,7 @@ public class ArmyGame extends JPanel implements Runnable {
 	public final static int WIDTH = 815;
 	public final static int HEIGHT = 630;
 	
+	public static int action = MOVING;
 	public static int currentState = PREGAME;
 	public static boolean gameRunning = false;
 	public static JLayeredPane fieldPane;
@@ -31,7 +31,17 @@ public class ArmyGame extends JPanel implements Runnable {
 	public static ImageIcon field;
 	public static Piece piece;
 	
+	public static ImageIcon up_icon;
+	public static ImageIcon down_icon;
+	public static ImageIcon right_icon;
+	public static ImageIcon left_icon;
+	public static JLabel up_lbl;
+	public static JLabel down_lbl;
+	public static JLabel right_lbl;
+	public static JLabel left_lbl;
+	
 	public boolean updateRival = false;
+	public static boolean myTurn = false;
 	
 	public static JLayeredPane sidePanel;
 	
@@ -63,8 +73,35 @@ public class ArmyGame extends JPanel implements Runnable {
 		fieldPane.add(fieldLabel , new Integer(1));
 		
 		add(fieldPane , BorderLayout.CENTER);
+		addButtonsToFieldPane();
+		
 		add(sidePanel , BorderLayout.EAST);
 	}
+	
+	public void addButtonsToFieldPane()
+	{
+		up_icon = new ImageIcon(getClass().getResource("uparrow.png"));
+		down_icon = new ImageIcon(getClass().getResource("downarrow.png"));
+		right_icon = new ImageIcon(getClass().getResource("rightarrow.png"));
+		left_icon = new ImageIcon(getClass().getResource("leftarrow.png"));
+		up_lbl = new JLabel(up_icon);
+		down_lbl = new JLabel(down_icon);
+		right_lbl = new JLabel(right_icon);
+		left_lbl = new JLabel(left_icon);
+		up_lbl.setBounds(200, 0 , up_icon.getIconWidth() , up_icon.getIconHeight());
+		down_lbl.setBounds(200, 0 , down_icon.getIconWidth() , down_icon.getIconHeight());
+		right_lbl.setBounds(200, 0 , right_icon.getIconWidth() , right_icon.getIconHeight());
+		left_lbl.setBounds(200, 0 , left_icon.getIconWidth() , left_icon.getIconHeight());
+		up_lbl.setVisible(true);
+		down_lbl.setVisible(true);
+		right_lbl.setVisible(true);
+		left_lbl.setVisible(true);
+		fieldPane.add(up_lbl , new Integer(4));
+		fieldPane.add(down_lbl , new Integer(4));
+		fieldPane.add(right_lbl , new Integer(4));
+		fieldPane.add(left_lbl , new Integer(4));
+	}
+	
 	public void create_fieldLabel()
 	{
 		field = new ImageIcon(getClass().getResource("Tabuleiro.png"));
@@ -129,6 +166,10 @@ public class ArmyGame extends JPanel implements Runnable {
 		{
 			if((arrayOfPieces.get(i).squaresx == tab_x)&&(arrayOfPieces.get(i).squaresy == tab_y))
 				return false;
+			else if(((tab_x == 2)||(tab_x==3))&&((tab_y == 4)||(tab_y==5))) // lake positions
+			{
+				return false;
+			}
 		}
 		return true;
 	}
@@ -320,13 +361,6 @@ public class ArmyGame extends JPanel implements Runnable {
 		}
 	}
 	
-	public void invert_positions(int player)
-	{
-		if(player == HOST)
-		{
-			
-		}
-	}
 	
 	public void updatePieces()
 	{
@@ -348,6 +382,7 @@ public class ArmyGame extends JPanel implements Runnable {
 				{
 					current.clickedOn = false;
 					current.selected = !current.selected;
+					Piece.highlighted = current;
 				}
 			}
 		}
@@ -432,14 +467,35 @@ public class ArmyGame extends JPanel implements Runnable {
 				if(all_pieces_positioned())
 				{
 					currentState = DURINGGAME;
-					JOptionPane.showMessageDialog(null, "O jogo começou");
+					JOptionPane.showMessageDialog(null, "Jogo Iniciado");
 					sel_frame_lbl.setVisible(false);
+					if(arrayOfPieces.get(0).team == Piece.TEAM.RED)
+						myTurn = true;
 				}
 				break;
 			case DURINGGAME:
 				updatePieces();
 				drawPieces();
 				updateSideLabels();
+				if(myTurn)
+				{
+					boolean[] bmovs = new boolean[4];
+					if(Piece.highlighted != null)
+					{
+						switch(action)
+						{
+							case MOVING:
+								bmovs = checkGameMoves();
+								showButtons(bmovs);
+								break;
+							case ATTACKING:
+							//	checkGameAttacks();
+								break;
+							default:
+									break;
+						}
+					}
+				}
 				break;
 			case FINISHINGGAME:
 				break;
@@ -448,6 +504,38 @@ public class ArmyGame extends JPanel implements Runnable {
 			default:
 					break;
 		}
+	}
+	
+	public void showButtons(boolean[] movements)
+	{
+		Piece p = Piece.highlighted;
+		if(movements[0])
+		{
+			up_lbl.setBounds(p.squaresx * SQFX , p.squaresy * SQFY , up_icon.getIconWidth() , up_icon.getIconHeight());
+		}
+		if(movements[1])
+		{
+			down_lbl.setBounds(p.squaresx * SQFX , p.squaresy * SQFY , down_icon.getIconWidth() , down_icon.getIconHeight());
+		}
+		if(movements[2])
+		{
+			right_lbl.setBounds(p.squaresx * SQFX , p.squaresy * SQFY , right_icon.getIconWidth() , right_icon.getIconHeight());
+		}
+		if(movements[3])
+		{
+			left_lbl.setBounds(p.squaresx * SQFX , p.squaresy * SQFY , left_icon.getIconWidth() , left_icon.getIconHeight());
+		}
+	}
+	
+	public boolean[] checkGameMoves()
+	{
+		Piece current;
+		boolean[] nearbyMoves;
+
+		nearbyMoves = nearbyField(Piece.highlighted.squaresx , Piece.highlighted.squaresy);
+		updateRival = true;
+		return nearbyMoves;
+			
 	}
 	
 	public boolean all_pieces_positioned()
@@ -460,6 +548,22 @@ public class ArmyGame extends JPanel implements Runnable {
 			}
 		}
 		return true;
+	}
+	
+	public boolean[] nearbyField(int x , int y)
+	{
+		boolean [] retorno = new boolean[4];
+		
+		if(y-1 >= 0)
+			retorno[0] = tabIsFree(x, y - 1);
+		else
+			retorno[0] = false;
+		if(y+1 < 10)
+			retorno[1] = tabIsFree(x, y + 1);
+		else
+			retorno[1] = false;
+		
+		return retorno;
 	}
 	
 	public void updateSideLabels()

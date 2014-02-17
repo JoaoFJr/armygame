@@ -224,14 +224,19 @@ public class Main extends JFrame implements Runnable{
 	            }
 				if(ConnectionSide.toShow.length()!=0)
 				{
-					if(!ConnectionSide.toShow.startsWith("command#"))
+					if(ConnectionSide.toShow.startsWith("command#"))
 					{
-						chat.chatTextArea.append("RIVAL: "+ConnectionSide.toShow);
+						updateFromRival(ConnectionSide.toShow);
+						ConnectionSide.toShow = "";
+					}
+					else if(ConnectionSide.toShow.startsWith("autogen#"))
+					{
+						autoPositionGame();
 						ConnectionSide.toShow = "";
 					}
 					else
 					{
-						updateFromRival(ConnectionSide.toShow);
+						chat.chatTextArea.append("RIVAL: "+ConnectionSide.toShow);
 						ConnectionSide.toShow = "";
 					}
 				}
@@ -321,7 +326,21 @@ public class Main extends JFrame implements Runnable{
 		{
 			game.r_dead_pieces[i] = Integer.parseInt(result.substring(i , i+1));
 		}
+	}
 	
-		
+	public void autoPositionGame()
+	{
+		for(int i = 0 ; i < game.arrayOfPieces.size()/2 ; i++)
+		{
+			game.arrayOfPieces.get(i).squaresx = i%10;
+			game.arrayOfPieces.get(i).squaresy = i/10 + 6;
+			game.arrayOfPieces.get(i).live = true;
+			game.arrayOfPieces.get(i).label.setVisible(true);
+			game.updateRival = true;
+		}
+		for(int i = 0 ; i < 12 ; i++)
+		{
+			game.dead_pieces[i] = 0;
+		}
 	}
 }
