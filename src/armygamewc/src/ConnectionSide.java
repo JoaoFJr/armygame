@@ -39,8 +39,11 @@ public class ConnectionSide implements Runnable
 	public  ObjectOutputStream output;
 	public static  ObjectInputStream input;
 	
+	public static Object inputObj = null;
+	
 	public static String message;
 	public static String toShow;
+
 	
 	
 	public ObjectOutputStream getOutput()

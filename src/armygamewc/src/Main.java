@@ -18,6 +18,7 @@ import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 
 //TODO layeredpane
 
@@ -35,6 +36,7 @@ public class Main extends JFrame implements Runnable{
 	public static ConnectionSide connectionSide = new ConnectionSide();
 	public final static Main application = new Main();
 	public static int previousState = ConnectionSide.connectionStatus;
+	public static String updtgame;
 	
 	public Main()
 	{
@@ -222,9 +224,33 @@ public class Main extends JFrame implements Runnable{
 	            }
 				if(ConnectionSide.toShow.length()!=0)
 				{
-					chat.chatTextArea.append("RIVAL: "+ConnectionSide.toShow);
-					ConnectionSide.toShow = "";
+					if(!ConnectionSide.toShow.startsWith("command#"))
+					{
+						chat.chatTextArea.append("RIVAL: "+ConnectionSide.toShow);
+						ConnectionSide.toShow = "";
+					}
+					else
+					{
+						updateFromRival(ConnectionSide.toShow);
+						ConnectionSide.toShow = "";
+					}
 				}
+				
+				buildCommandMsg();
+				if(game.updateRival)
+				{
+					game.updateRival = false;
+					try 
+					{
+						connectionSide.output.writeObject(updtgame);
+						connectionSide.output.flush();
+					} catch (IOException e) 
+					{
+						e.printStackTrace();
+					}
+				}
+                
+				
 				// Atualizar o panel do jogo!
 				//
 				//
@@ -247,6 +273,55 @@ public class Main extends JFrame implements Runnable{
 		//System.out.println(chat.toAppend +"s");
 		chat.toAppend.setLength(0);
 		//application.repaint();
+		
+	}
+	
+	public void buildCommandMsg()
+	{
+		updtgame = "command#";
+		updtgame = updtgame+sendIntArrayAsString(game.dead_pieces);
+		updtgame = updtgame+"@";
+		updtgame = updtgame+game.arrayOfPieces.toString();
+		updtgame = updtgame+"\n";
+	}
+	
+	// Envia apenas a parte que contém as peças deste jogador (metade do arraylist)
+	public String sendPieceArraylistAsString(ArrayList<Piece> ap)
+	{
+		String s = "";
+		for(int i = 0 ; i < ap.size()/2 ; i ++)
+		{
+			s=s+"("+ap.get(i).squaresx+","+ap.get(i).squaresy+");";
+		}
+		return s;
+	}
+	
+	public String sendIntArrayAsString(int[] a)
+	{
+		String s = "";
+		for (int i = 0 ; i < a.length ; i++)
+		{
+			s = s + a[i] + ',';
+		}
+		return s;
+	}
+	
+	public void updateFromRival(String rcvd)
+	{
+		String[] str;
+		String result;
+		str = rcvd.split("#"); // divide a string e pega a parte interessante (lado direito)
+		result = str[1];
+		
+		str = result.split("@");// divide novamente para pegar o lado esquerdo (r_dead_pieces)
+		result = str[0];
+		result = result.replace(",",""); // remove as virgulas para iniciar a atribuição
+		
+		for(int i = 0; i < game.r_dead_pieces.length ; i++)
+		{
+			game.r_dead_pieces[i] = Integer.parseInt(result.substring(i , i+1));
+		}
+	
 		
 	}
 }

@@ -2,6 +2,7 @@
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import javax.swing.*;
@@ -30,6 +31,8 @@ public class ArmyGame extends JPanel implements Runnable {
 	public static ImageIcon field;
 	public static Piece piece;
 	
+	public boolean updateRival = false;
+	
 	public static JLayeredPane sidePanel;
 	
 	public static ImageIcon sel_frame_img;
@@ -41,6 +44,7 @@ public class ArmyGame extends JPanel implements Runnable {
 	public JLabel[] your_pieces = new JLabel[12];
 	public JLabel[] rival_pieces = new JLabel[12];
 	public int dead_pieces[] = {1, 1 , 8 , 5 , 4 , 4 , 4 , 3 , 2 , 1 , 1 , 6};
+	public int r_dead_pieces[] = {1, 1 , 8 , 5 , 4 , 4 , 4 , 3 , 2 , 1 , 1 , 6};
 	public int all_pieces[] = {1, 1 , 8 , 5 , 4 , 4 , 4 , 3 , 2 , 1 , 1 , 6};
 	
 	public ArmyGame()
@@ -96,15 +100,37 @@ public class ArmyGame extends JPanel implements Runnable {
 			@Override
 			public void mouseClicked(MouseEvent arg0) {
 				// TODO Auto-generated method stub
-				if(pickedPiece >= 0 && dead_pieces[pickedPiece]>0)
+				if(currentState == PREGAME)
 				{
-					int index = getDesiredPiece(pickedPiece);
-					arrayOfPieces.get(index).live = true;
-					//arrayOfPieces.get(index)
-					dead_pieces[pickedPiece] = dead_pieces[pickedPiece]-1;
+					if(pickedPiece >= 0 && dead_pieces[pickedPiece]>0)
+					{
+						
+						int tab_x =  arg0.getX()/SQFX;
+						int tab_y =  arg0.getY()/SQFY;
+						if(tab_y >=6 &&  tabIsFree(tab_x , tab_y))
+						{
+							int index = getDesiredPiece(pickedPiece);
+							arrayOfPieces.get(index).live = true;
+							arrayOfPieces.get(index).squaresx = tab_x;
+							arrayOfPieces.get(index).squaresy = tab_y;
+							dead_pieces[pickedPiece] = dead_pieces[pickedPiece]-1;
+							updateRival = true;
+						}
+						
+					}
 				}
 			}
 		});
+	}
+	
+	public boolean tabIsFree(int tab_x , int tab_y)
+	{
+		for(int i = 0; i < arrayOfPieces.size() ; i++)
+		{
+			if((arrayOfPieces.get(i).squaresx == tab_x)&&(arrayOfPieces.get(i).squaresy == tab_y))
+				return false;
+		}
+		return true;
 	}
 	
 	public void create_sidePanel()
@@ -169,6 +195,18 @@ public class ArmyGame extends JPanel implements Runnable {
 		
 	}
 	
+	public int getDesiredPiece(int pickedPiece)
+	{
+		for(int i = 0; i < arrayOfPieces.size() ; i++)
+		{
+			if((arrayOfPieces.get(i).id == pickedPiece)&&(!arrayOfPieces.get(i).live))
+			{
+				return i;
+			}
+		}
+		return -1;
+	}
+	
 	public void addPiecesToPanel()
 	{
 		Piece current;
@@ -225,7 +263,8 @@ public class ArmyGame extends JPanel implements Runnable {
 					@Override
 					public void mouseClicked(MouseEvent arg0) {
 						// TODO Auto-generated method stub
-						sel_frame_lbl.setVisible(true);
+						if(currentState == PREGAME)
+							sel_frame_lbl.setVisible(true);
 						Rectangle r = (arg0.getComponent()).getBounds();
 						sel_frame_lbl.setBounds(r.x-3, r.y-3, r.width+6, r.height+6);
 						switch((r.y - 20)/40)
@@ -263,6 +302,8 @@ public class ArmyGame extends JPanel implements Runnable {
 							case Piece.MARECHAL:
 								pickedPiece = Piece.MARECHAL;
 								break;
+							case Piece.BOMBA:
+								pickedPiece = Piece.BOMBA;
 							default:
 								break;
 						}
@@ -355,6 +396,26 @@ public class ArmyGame extends JPanel implements Runnable {
 		}
 	}
 	
+	public void checkRemovedPieces()
+	{
+		Piece current;
+		//checa se o usuário quer remover uma peça que já está no tabuleiro.
+		for(int i = 0; i < arrayOfPieces.size()/2 ; i++)
+		{
+			current = arrayOfPieces.get(i);
+			if(current.selected)
+			{
+				current.selected = false;
+				current.live = false;
+				current.squaresx = -1;
+				current.squaresy= -1;
+				dead_pieces[current.id] ++;
+				updateRival = true;
+			}
+		}
+	}
+	
+	
 	@Override
 	public void run()
 	{
@@ -366,10 +427,19 @@ public class ArmyGame extends JPanel implements Runnable {
 			case PREGAME:
 				updatePieces();
 				drawPieces();
+				updateSideLabels();
+				checkRemovedPieces();
+				if(all_pieces_positioned())
+				{
+					currentState = DURINGGAME;
+					JOptionPane.showMessageDialog(null, "O jogo começou");
+					sel_frame_lbl.setVisible(false);
+				}
 				break;
 			case DURINGGAME:
 				updatePieces();
 				drawPieces();
+				updateSideLabels();
 				break;
 			case FINISHINGGAME:
 				break;
@@ -377,6 +447,27 @@ public class ArmyGame extends JPanel implements Runnable {
 				break;
 			default:
 					break;
+		}
+	}
+	
+	public boolean all_pieces_positioned()
+	{
+		for(int i = 0 ; i < dead_pieces.length ; i++)
+		{
+			if(dead_pieces[i]>0 || r_dead_pieces[i]>0)
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	public void updateSideLabels()
+	{
+		for(int i = 0; i < 12 ; i++)
+		{
+			your_pieces[i].setText(""+dead_pieces[i]+"/"+all_pieces[i]);
+			rival_pieces[i].setText(""+r_dead_pieces[i]+"/"+all_pieces[i]);
 		}
 	}
 }
