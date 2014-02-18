@@ -286,17 +286,21 @@ public class Main extends JFrame implements Runnable{
 		updtgame = "command#";
 		updtgame = updtgame+sendIntArrayAsString(game.dead_pieces);
 		updtgame = updtgame+"@";
-		updtgame = updtgame+game.arrayOfPieces.toString();
+		updtgame = updtgame+sendPieceArrayListAsString(game.arrayOfPieces);
 		updtgame = updtgame+"\n";
 	}
 	
 	// Envia apenas a parte que contém as peças deste jogador (metade do arraylist)
-	public String sendPieceArraylistAsString(ArrayList<Piece> ap)
+	public String sendPieceArrayListAsString(ArrayList<Piece> ap)
 	{
 		String s = "";
 		for(int i = 0 ; i < ap.size()/2 ; i ++)
 		{
-			s=s+"("+ap.get(i).squaresx+","+ap.get(i).squaresy+");";
+			s=s+"("+ap.get(i).squaresx+","+ap.get(i).squaresy+",";
+			if(ap.get(i).live)
+				s = s+"1);";
+			else
+				s = s+"0);";
 		}
 		return s;
 	}
@@ -314,18 +318,40 @@ public class Main extends JFrame implements Runnable{
 	public void updateFromRival(String rcvd)
 	{
 		String[] str;
-		String result;
+		String dpieces;
+		String fpieces;
 		str = rcvd.split("#"); // divide a string e pega a parte interessante (lado direito)
-		result = str[1];
+		dpieces = str[1];
 		
-		str = result.split("@");// divide novamente para pegar o lado esquerdo (r_dead_pieces)
-		result = str[0];
-		result = result.replace(",",""); // remove as virgulas para iniciar a atribuição
-		
+		str = dpieces.split("@");// divide novamente
+		dpieces = str[0];		// lado contendo dead_pieces
+		dpieces = dpieces.replace("," , ""); // remove as virgulas para iniciar a atribuição
 		for(int i = 0; i < game.r_dead_pieces.length ; i++)
 		{
-			game.r_dead_pieces[i] = Integer.parseInt(result.substring(i , i+1));
+			game.r_dead_pieces[i] = Integer.parseInt(dpieces.substring(i , i+1));
 		}
+		fpieces = str[1];
+		fpieces = fpieces.replace("\n" , "");
+		str = fpieces.split(";");
+		for(int i=0 ; i < str.length; i ++)
+		{
+			String[] substr;
+			substr = str[i].replace("(", "").replace(")", "").split(",");
+			game.arrayOfPieces.get(i+40).squaresx = 9 - Integer.parseInt(substr[0]);
+			game.arrayOfPieces.get(i+40).squaresy = 9 - Integer.parseInt(substr[1]);
+			if(Integer.parseInt(substr[2]) == 1 )
+			{
+				game.arrayOfPieces.get(i+40).live = true;
+				game.arrayOfPieces.get(i+40).label.setVisible(true);
+			}
+			else
+			{
+				game.arrayOfPieces.get(i).live = false;
+				game.arrayOfPieces.get(i).label.setVisible(false);
+			}
+		}
+		
+		
 	}
 	
 	public void autoPositionGame()

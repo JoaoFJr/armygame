@@ -126,26 +126,53 @@ public class ArmyGame extends JPanel implements Runnable {
 			
 			@Override
 			public void mouseClicked(MouseEvent e) {
+				boolean moved = false;
 				Component c;
 				c = e.getComponent();
 				
 				if(c == up_lbl)
 				{
 					Piece.highlighted.squaresy --;
+					moved = true;
 				}
 				else if(c == down_lbl )
 				{
 					Piece.highlighted.squaresy ++;
+					moved = true;
 				}
 				if(c == right_lbl)
 				{
 					Piece.highlighted.squaresx ++;
+					moved =  true;
 				}
 				else if(c == left_lbl)
 				{
 					Piece.highlighted.squaresx --;
+					moved = true;
 				}
 				
+				if(moved)
+				{
+					
+					if(Piece.highlighted.id == Piece.SOLDADO)
+					{
+						if(JOptionPane.showConfirmDialog(null, "Esta peça pode mover mais\n " +
+								"de uma vez, deseja utilizar um possível\n" +
+								" movimento adicional?") != JOptionPane.YES_OPTION)
+						{
+							action = ATTACKING;
+							hideMoveButtons();
+							updateRival = true;
+						}
+							
+					}
+					else
+					{
+						action = ATTACKING;
+						hideMoveButtons();
+						updateRival = true;
+					}
+				}
 			}
 		};
 		
@@ -287,7 +314,7 @@ public class ArmyGame extends JPanel implements Runnable {
 				arrayOfPieces.add(new Piece(Piece.GENERAL , Piece.TEAM.RED ,new ImageIcon(getClass().getResource("red_general.png"))));
 				arrayOfPieces.add(new Piece(Piece.MARECHAL , Piece.TEAM.RED ,new ImageIcon(getClass().getResource("red_marshal.png"))));
 				arrayOfPieces.add(new Piece(Piece.BANDEIRA , Piece.TEAM.RED ,new ImageIcon(getClass().getResource("red_flag.png"))));
-				arrayOfPieces.add(new Piece(Piece.ESPIAO, Piece.TEAM.RED ,new ImageIcon(getClass().getResource("red_spy.png"))));
+				arrayOfPieces.add(new Piece(Piece.ESPIAO, Piece.TEAM.RED ,new ImageIcon(getClass().getResource("red_spy_2.png"))));
 			}
 		}
 		
@@ -417,6 +444,17 @@ public class ArmyGame extends JPanel implements Runnable {
 		}
 	}
 	
+	public void hideMoveButtons()
+	{
+		up_lbl.setVisible(false);
+		up_lbl.setBounds(-50, 0 , up_icon.getIconWidth() , up_icon.getIconHeight());
+		down_lbl.setVisible(false);
+		down_lbl.setBounds(-50, 0 , down_icon.getIconWidth() , down_icon.getIconHeight());
+		right_lbl.setVisible(false);
+		right_lbl.setBounds(-50, 0 , right_icon.getIconWidth() , right_icon.getIconHeight());
+		left_lbl.setVisible(false);
+		left_lbl.setBounds(-50, 0 , left_icon.getIconWidth() , left_icon.getIconHeight());
+	}
 	
 	public void updatePieces()
 	{
@@ -432,7 +470,7 @@ public class ArmyGame extends JPanel implements Runnable {
 				current.label.setBounds(LAYOFFX + current.squaresx * SQFX +SQFX/2 - current.image.getIconWidth()/2, 
 						LAYOFFY + current.squaresy*SQFY  + 2, current.image.getIconWidth(), current.image.getIconHeight());
 				current.details.setBounds(LAYOFFX + current.squaresx * SQFX +SQFX/2 - current.details.getText().length()* 7/2, 
-						LAYOFFY + current.squaresy*SQFY  + 2*SQFY/3 , current.details.getText().length()* 7 , current.image.getIconHeight()/3);
+						LAYOFFY + current.squaresy*SQFY  + 2*SQFY/3 , current.details.getText().length()* 8 , current.image.getIconHeight()/3);
 				
 				if(current.clickedOn)
 				{
@@ -482,7 +520,7 @@ public class ArmyGame extends JPanel implements Runnable {
 				arrayOfPieces.add(new Piece(Piece.GENERAL , Piece.TEAM.BLUE ,new ImageIcon(getClass().getResource("blue_general.png"))));
 				arrayOfPieces.add(new Piece(Piece.MARECHAL , Piece.TEAM.BLUE ,new ImageIcon(getClass().getResource("blue_marshal.png"))));
 				arrayOfPieces.add(new Piece(Piece.BANDEIRA , Piece.TEAM.BLUE ,new ImageIcon(getClass().getResource("blue_flag.png"))));
-				arrayOfPieces.add(new Piece(Piece.ESPIAO, Piece.TEAM.BLUE ,new ImageIcon(getClass().getResource("blue_spy.png"))));
+				arrayOfPieces.add(new Piece(Piece.ESPIAO, Piece.TEAM.BLUE ,new ImageIcon(getClass().getResource("blue_spy_2.png"))));
 			}
 		}
 	}
@@ -523,10 +561,16 @@ public class ArmyGame extends JPanel implements Runnable {
 				if(all_pieces_positioned())
 				{
 					currentState = DURINGGAME;
-					JOptionPane.showMessageDialog(null, "Jogo Iniciado");
 					sel_frame_lbl.setVisible(false);
 					if(arrayOfPieces.get(0).team == Piece.TEAM.RED)
+					{
 						myTurn = true;
+						JOptionPane.showMessageDialog(null, "Você Iniciará o jogo! Boa sorte!");
+					}
+					else
+					{
+						JOptionPane.showMessageDialog(null, "Seu rival iniciará o jogo! Boa sorte!");
+					}
 				}
 				break;
 			case DURINGGAME:
@@ -536,7 +580,7 @@ public class ArmyGame extends JPanel implements Runnable {
 				if(myTurn)
 				{
 					boolean[] bmovs = new boolean[4];
-					if(Piece.highlighted != null)
+					if(Piece.highlighted != null && isAlly(Piece.highlighted))
 					{
 						switch(action)
 						{
@@ -551,6 +595,12 @@ public class ArmyGame extends JPanel implements Runnable {
 									break;
 						}
 					}
+					if(noPieceCanMove())
+					{
+						action = ATTACKING;
+						hideMoveButtons();
+						updateRival = true;
+					}
 				}
 				break;
 			case FINISHINGGAME:
@@ -560,6 +610,28 @@ public class ArmyGame extends JPanel implements Runnable {
 			default:
 					break;
 		}
+	}
+	
+	public boolean isAlly(Piece p)
+	{
+		if(arrayOfPieces.indexOf(p) < 40)
+			return true;
+		else
+			return false;
+	}
+	
+	public boolean noPieceCanMove()
+	{
+		boolean[] b = new boolean[4];
+		{
+			for(int i = 0; i < arrayOfPieces.size()/2 ; i++)
+			{
+				b = checkGameMoves(arrayOfPieces.get(i));
+				if(b[0] || b[1] || b[2] || b[3])
+					return false;
+			}
+		}
+		return true;
 	}
 	
 	public void showButtons(boolean[] movements)
@@ -611,26 +683,27 @@ public class ArmyGame extends JPanel implements Runnable {
 		}
 		else
 		{
-			up_lbl.setVisible(false);
-			up_lbl.setBounds(-50, 0 , up_icon.getIconWidth() , up_icon.getIconHeight());
-			down_lbl.setVisible(false);
-			down_lbl.setBounds(-50, 0 , down_icon.getIconWidth() , down_icon.getIconHeight());
-			right_lbl.setVisible(false);
-			right_lbl.setBounds(-50, 0 , right_icon.getIconWidth() , right_icon.getIconHeight());
-			left_lbl.setVisible(false);
-			left_lbl.setBounds(-50, 0 , left_icon.getIconWidth() , left_icon.getIconHeight());
+			hideMoveButtons();
 		}
 	}
 	
 	public boolean[] checkGameMoves()
 	{
-		Piece current;
 		boolean[] nearbyMoves;
 
 		nearbyMoves = nearbyField(Piece.highlighted.squaresx , Piece.highlighted.squaresy);
 		updateRival = true;
 		return nearbyMoves;
 			
+	}
+	
+	public boolean[] checkGameMoves(Piece p)
+	{
+		boolean[] nearbyMoves;
+
+		nearbyMoves = nearbyField(p.squaresx , p.squaresy);
+		updateRival = true;
+		return nearbyMoves;
 	}
 	
 	public boolean all_pieces_positioned()
