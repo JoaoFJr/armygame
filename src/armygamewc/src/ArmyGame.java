@@ -43,6 +43,7 @@ public class ArmyGame extends JPanel implements Runnable {
 	
 	public int[] attackInfo = new int[6];
 	public boolean updateRival = false;
+	public boolean attackedRival = false;
 	public boolean attackedByRival = false;
 	public static boolean myTurn = false;
 	public static boolean finishedTurn = false;
@@ -255,15 +256,19 @@ MouseListener mal = new MouseListener() {
 					Piece enemy;
 					if(c == up_atk_lbl)
 					{
-						used.squaresy --;
+						used.squaresy--;
 						enemy = getEnemyPiece(used.squaresx , used.squaresy);
 						hideAttackLabels();
-						buildAttackMsg(used.id , used.squaresx , used.squaresy , enemy.id , enemy.squaresx , enemy.squaresy );
 						
-						JOptionPane.showMessageDialog(c, "Você decidiu atacar este inimigo.",
-								"Ataque ao inimigo!", JOptionPane.INFORMATION_MESSAGE, enemy.image);
 						used.attack(enemy);
+						
 						informUpdate();
+						
+						JOptionPane.showMessageDialog(null, "Você Atacou este inimigo.\nA(s) peça(s) será(ão) removida(s) de acordo",
+								"Ataque ao inimigo!", JOptionPane.INFORMATION_MESSAGE, enemy.image);
+						
+						informAttack(used.id , used.squaresx , used.squaresy , enemy.id , enemy.squaresx , enemy.squaresy);
+						
 					}
 					else if(c == down_atk_lbl)
 					{
@@ -296,6 +301,23 @@ MouseListener mal = new MouseListener() {
 		fieldPane.add(left_atk_lbl , new Integer(4));
 	}
 	
+	
+	public void attackPiece(Piece p , Piece e)
+	{
+		arrayOfPieces.get(getIndexOfPiece(p)).attack(arrayOfPieces.get(getIndexOfPiece(e)));
+	}
+	
+	public Piece getAllyPiece(int x , int y)
+	{
+		Piece p = null;
+		for(int i = 0 ; i < arrayOfPieces.size()/2 ; i++)
+		{
+			if((arrayOfPieces.get(i).squaresx == x) && (arrayOfPieces.get(i).squaresy == y))
+				p = arrayOfPieces.get(i);
+		}
+		return p;
+	}
+	
 	public Piece getEnemyPiece(int x , int y)
 	{
 		Piece p = null;
@@ -318,13 +340,17 @@ MouseListener mal = new MouseListener() {
 		left_atk_lbl.setVisible(false);
 		left_atk_lbl.setBounds(-50, 0 , atk_icon.getIconWidth() , atk_icon.getIconHeight());
 	}
-	
+	public void informAttack(int uid , int ux , int uy , int eid , int ex , int ey)
+	{
+		buildAttackMsg(uid , ux , uy , eid , ex , ey );
+		attackedRival = true;
+		
+	}
 	public void buildAttackMsg(int uid , int ux , int uy , int eid , int ex , int ey )
 	{
 		attackMsg = "gotattack#";
 		attackMsg = attackMsg+"("+uid+","+(9-ux)+","+(9-uy)+");";
 		attackMsg = attackMsg+"("+eid+","+(9-ex)+","+(9-ey)+")";
-		
 	}
 	
 	public void create_fieldLabel()
@@ -457,6 +483,17 @@ MouseListener mal = new MouseListener() {
 			}
 		}
 		
+	}
+	public int getIndexOfPiece(Piece p)
+	{
+		for(int i = 0; i < arrayOfPieces.size() ; i++)
+		{
+			if(arrayOfPieces.get(i).equals(p))
+			{
+				return i;
+			}
+		}
+		return -1;
 	}
 	
 	public int getDesiredPiece(int pickedPiece)
@@ -611,6 +648,11 @@ MouseListener mal = new MouseListener() {
 				current.details.setBounds(LAYOFFX + current.squaresx * SQFX +SQFX/2 - current.details.getText().length()* 7/2, 
 						LAYOFFY + current.squaresy*SQFY  + 2*SQFY/3 , current.details.getText().length()* 8 , current.image.getIconHeight()/3);
 				
+				if(current.mouseIsOn && i < 40)
+					current.details.setVisible(true);
+				else
+					current.details.setVisible(false);
+				
 				if(current.clickedOn)
 				{
 					current.clickedOn = false;
@@ -760,7 +802,9 @@ MouseListener mal = new MouseListener() {
 					if(attackedByRival)
 					{
 						attackedByRival = false;
+						
 						showAttackMessage(attackInfo[0] , attackInfo[1] , attackInfo[2] , attackInfo[3] , attackInfo[4] , attackInfo[5]);
+						getEnemyPiece(attackInfo[1], attackInfo[2]).attack(getAllyPiece(attackInfo[4], attackInfo[5]));
 					}
 				}
 				previousState = DURINGGAME;
@@ -1156,20 +1200,34 @@ MouseListener mal = new MouseListener() {
 		updtgame = "command#";
 		updtgame = updtgame+sendIntArrayAsString(dead_pieces);
 		updtgame = updtgame+"@";
-		updtgame = updtgame+sendPieceArrayListAsString(arrayOfPieces);
+		updtgame = updtgame+sendPieceArrayListAsString(arrayOfPieces , 0);
 		updtgame = updtgame+"\n";
 	}
 	
-	public String sendPieceArrayListAsString(ArrayList<Piece> ap)
+	public String sendPieceArrayListAsString(ArrayList<Piece> ap , int type)
 	{
 		String s = "";
-		for(int i = 0 ; i < ap.size()/2 ; i ++)
+		if (type == 0)
 		{
-			s=s+"("+ap.get(i).squaresx+","+ap.get(i).squaresy+",";
-			if(ap.get(i).live)
-				s = s+"1);";
-			else
-				s = s+"0);";
+			for(int i = 0 ; i < ap.size()/2 ; i ++)
+			{
+				s=s+"("+ap.get(i).squaresx+","+ap.get(i).squaresy+",";
+				if(ap.get(i).live)
+					s = s+"1);";
+				else
+					s = s+"0);";
+			}
+		}
+		else
+		{
+			for(int i = ap.size()/2 ; i < ap.size() ; i ++)
+			{
+				s=s+"("+ap.get(i).squaresx+","+ap.get(i).squaresy+",";
+				if(ap.get(i).live)
+					s = s+"1);";
+				else
+					s = s+"0);";
+			}
 		}
 		return s;
 	}

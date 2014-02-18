@@ -243,7 +243,7 @@ public class Main extends JFrame implements Runnable{
 					}
 					else if(ConnectionSide.toShow.startsWith("gotattack#"))
 					{
-						chat.chatTextArea.append("RIVAL: "+ConnectionSide.toShow);
+						chat.toShow = ConnectionSide.toShow;
 						receivedAttack(ConnectionSide.toShow);
 						ConnectionSide.toShow = "";
 					}
@@ -260,6 +260,18 @@ public class Main extends JFrame implements Runnable{
 					try 
 					{
 						connectionSide.output.writeObject(game.updtgame);
+						connectionSide.output.flush();
+					} catch (IOException e) 
+					{
+						e.printStackTrace();
+					}
+				}
+				if(game.attackedRival)
+				{
+					game.attackedRival = false;
+					try 
+					{
+						connectionSide.output.writeObject(game.attackMsg);
 						connectionSide.output.flush();
 					} catch (IOException e) 
 					{
@@ -331,7 +343,7 @@ public class Main extends JFrame implements Runnable{
 				}
 				else
 				{
-					game.arrayOfPieces.get(i).live = false;
+					game.arrayOfPieces.get(i+40).live = false;
 				}
 			}
 		}
@@ -343,6 +355,8 @@ public class Main extends JFrame implements Runnable{
 		String[] str;
 		String[] substr1;
 		String[] substr2;
+		
+		
 		str = attackmsg.split("#");
 		str = str[1].split(";");
 		str[0] = str[0].replace("(", "").replace(")", "");
@@ -355,8 +369,11 @@ public class Main extends JFrame implements Runnable{
 		game.attackInfo[3] = Integer.parseInt(substr2[0]);
 		game.attackInfo[4] = Integer.parseInt(substr2[1]);
 		game.attackInfo[5] = Integer.parseInt(substr2[2]);
+		
+		
 		game.attackedByRival = true;
 	}
+	
 	
 	public void autoPositionGame()
 	{

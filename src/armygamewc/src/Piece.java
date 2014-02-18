@@ -106,14 +106,12 @@ public class Piece
 			public void mouseEntered(MouseEvent arg0) {
 				// TODO Auto-generated method stub
 				mouseIsOn = true;
-				details.setVisible(true);
 			}
 
 			@Override
 			public void mouseExited(MouseEvent arg0) {
 				// TODO Auto-generated method stub
 				mouseIsOn = false;
-				details.setVisible(false);
 			}
 
 			@Override
