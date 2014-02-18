@@ -10,7 +10,7 @@ import javax.swing.*;
 import javax.swing.text.DefaultCaret;
 
 
-public class Chat extends JPanel
+public class Chat extends JPanel implements Runnable
 {
 	public JTextField chatTextField;
 	public JTextArea chatTextArea;
@@ -18,72 +18,53 @@ public class Chat extends JPanel
 	public  StringBuffer toAppend = new StringBuffer("");
 	public  StringBuffer toSend = new StringBuffer("");
 	
+	public static String toShow = "";
+	
+	public static boolean chatIsEnabled = false;
+	
+	
 	public Chat()
 	{
 		super();
+		chatTextField = new JTextField();
+		chatTextField.setEditable(chatIsEnabled);
 		
-		SwingUtilities.invokeLater(new Runnable()
+		chatTextField.addActionListener(new ActionListener() 
 		{
-			public void run()
+			public void actionPerformed(ActionEvent e)
 			{
-				chatTextField = new JTextField();
-				chatTextField.setEditable(false);
-				chatTextField.addActionListener(new ActionAdapter() {
-		            public void actionPerformed(ActionEvent e) {
-		                String s = chatTextField.getText();
-		                if (!s.equals("")) {
-		                  appendToChatBox("VOCÊ: " + s + "\n");
-		                   chatTextField.selectAll();
-
-		                   // Send the string
-		                   sendString(s);
-		                }
-		             }
-		          });
-				chatTextField.addActionListener(new ActionListener() 
-				{
-					public void actionPerformed(ActionEvent e)
-					{
-						String s = chatTextField.getText();
-						
-		                if (!s.equals(""))
-		                {
-		                	appendToChatBox("VOCÊ: " + s + "\n");
-		                	chatTextField.selectAll();
-		                	// Send the string
-		                	sendString(s);
-		                }
-						chatTextField.setText("");
-					}
-				});
+				String s = chatTextField.getText();
 				
-				chatTextArea = new JTextArea();
-				chatTextArea.setEditable(false);
-				chatTextArea.setAutoscrolls(true);
-				setPreferredSize(new Dimension (800, 100));
-				setLayout(new BorderLayout());
-				
-				add(new JScrollPane(chatTextArea) , BorderLayout.CENTER);
-				add(chatTextField , BorderLayout.NORTH);
+                if (!s.equals(""))
+                {
+                	appendToChatBox("VOCÊ: " + s + "\n");
+                	chatTextField.selectAll();
+                	// Send the string
+                	sendString(s);
+                }
+				chatTextField.setText("");
 			}
 		});
 		
+		chatTextArea = new JTextArea();
+		chatTextArea.setEditable(false);
+		chatTextArea.setAutoscrolls(true);
+		setPreferredSize(new Dimension (800, 100));
+		setLayout(new BorderLayout());
+		
+		add(new JScrollPane(chatTextArea) , BorderLayout.CENTER);
+		add(chatTextField , BorderLayout.NORTH);
 	}
 
 	   // Acrescenta o texto ao chatbox
-	   private void appendToChatBox(String s) {
-	      synchronized (toAppend) {
+	   private void appendToChatBox(String s)
+	   {
 	         toAppend.append(s);
-	      }
 	   }
 
-	   /////////////////////////////////////////////////////////////////
-
-	   // Acrescenta o texto ao buffer de envio
-	   private  void sendString(String s) {
-	      synchronized (toSend) {
+	   private  void sendString(String s)
+	   {
 	         toSend.append(s + "\n");
-	      }
 	   }
 	
 	public void setOutput(ObjectOutputStream newOutput)
@@ -93,6 +74,29 @@ public class Chat extends JPanel
 
 	public void displayMessage(String msgToDisplay) {
 		chatTextArea.append(msgToDisplay);
+		
+	}
+	
+	public void update()
+	{
+		if(chatIsEnabled)
+		{
+			chatTextField.setEditable(true);
+		}
+		else
+			chatTextField.setEditable(false);
+		
+		if(toShow.length() > 0)
+		{
+			chatTextArea.append("RIVAL: "+toShow);
+		}
+		toShow = "";
+	}
+
+	@Override
+	public void run() {
+		
+		update();
 		
 	}
 

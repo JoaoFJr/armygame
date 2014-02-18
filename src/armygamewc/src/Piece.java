@@ -21,11 +21,12 @@ public class Piece
 	public static final int GENERAL = 9;
 	public static final int MARECHAL = 10;
 	public static final int BOMBA = 11;
-	public static enum TEAM { RED , BLUE };
+	public static final int RED = 0;
+	public static final int BLUE = 1;
 	
 	public static Piece highlighted = null;
 	int id;
-	TEAM team;
+	int team;
 	public boolean live = false;
 	public int squaresx = 1;
 	public int squaresy = 1;
@@ -42,7 +43,7 @@ public class Piece
 	public boolean selected = false;
 	public boolean clickedOn = false;
 	
-	public Piece(int p , TEAM t , ImageIcon im)
+	public Piece(int p , int t , ImageIcon im)
 	{
 		id = p;
 		team = t;

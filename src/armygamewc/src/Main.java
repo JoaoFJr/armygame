@@ -36,7 +36,6 @@ public class Main extends JFrame implements Runnable{
 	public static ConnectionSide connectionSide = new ConnectionSide();
 	public final static Main application = new Main();
 	public static int previousState = ConnectionSide.connectionStatus;
-	public static String updtgame;
 	
 	public Main()
 	{
@@ -150,10 +149,14 @@ public class Main extends JFrame implements Runnable{
 	         catch (InterruptedException e) {}
 	         SwingUtilities.invokeLater(game);
 	         SwingUtilities.invokeLater(application);
+	         SwingUtilities.invokeLater(chat);
+	         SwingUtilities.invokeLater(connectionSide);
+	        
 		 }
 	}
 	@Override
-	public void run() {
+	public void run() 
+	{
 		
 		// Lógica de funcionamento da aplicação, de acordo com o estado atual do jogo.
 		switch(ConnectionSide.connectionStatus)
@@ -205,21 +208,30 @@ public class Main extends JFrame implements Runnable{
 							game.rival_pieces[i].setVisible(true);
 						}
 					}
-					
 				}
+				
 				startGame.setEnabled(false);
 				stopMenu.setEnabled(true);
-				chat.chatTextField.setEditable(true);
+				Chat.chatIsEnabled = true;
 				if (chat.toSend.length() != 0) {
-					try
+					
+					if(chat.toSend.toString().startsWith("autogen#"))
 					{
-					  connectionSide.output.writeObject((String)chat.toSend.toString());
-	                  connectionSide.output.flush();
-	                  chat.toSend.setLength(0);
+						autoPositionGame();
+						chat.toSend.setLength(0);
 					}
-					catch(IOException ioe)
+					else
 					{
-						ioe.printStackTrace();
+						try
+						{
+						  connectionSide.output.writeObject((String)chat.toSend.toString());
+		                  connectionSide.output.flush();
+		                  chat.toSend.setLength(0);
+						}
+						catch(IOException ioe)
+						{
+							ioe.printStackTrace();
+						}
 					}
 	            }
 				if(ConnectionSide.toShow.length()!=0)
@@ -229,25 +241,25 @@ public class Main extends JFrame implements Runnable{
 						updateFromRival(ConnectionSide.toShow);
 						ConnectionSide.toShow = "";
 					}
-					else if(ConnectionSide.toShow.startsWith("autogen#"))
+					else if(ConnectionSide.toShow.startsWith("gotattack#"))
 					{
-						autoPositionGame();
+						chat.chatTextArea.append("RIVAL: "+ConnectionSide.toShow);
+						receivedAttack(ConnectionSide.toShow);
 						ConnectionSide.toShow = "";
 					}
 					else
 					{
-						chat.chatTextArea.append("RIVAL: "+ConnectionSide.toShow);
+						Chat.toShow = ConnectionSide.toShow;
 						ConnectionSide.toShow = "";
 					}
 				}
 				
-				buildCommandMsg();
 				if(game.updateRival)
 				{
 					game.updateRival = false;
 					try 
 					{
-						connectionSide.output.writeObject(updtgame);
+						connectionSide.output.writeObject(game.updtgame);
 						connectionSide.output.flush();
 					} catch (IOException e) 
 					{
@@ -281,39 +293,10 @@ public class Main extends JFrame implements Runnable{
 		
 	}
 	
-	public void buildCommandMsg()
-	{
-		updtgame = "command#";
-		updtgame = updtgame+sendIntArrayAsString(game.dead_pieces);
-		updtgame = updtgame+"@";
-		updtgame = updtgame+sendPieceArrayListAsString(game.arrayOfPieces);
-		updtgame = updtgame+"\n";
-	}
+	
 	
 	// Envia apenas a parte que contém as peças deste jogador (metade do arraylist)
-	public String sendPieceArrayListAsString(ArrayList<Piece> ap)
-	{
-		String s = "";
-		for(int i = 0 ; i < ap.size()/2 ; i ++)
-		{
-			s=s+"("+ap.get(i).squaresx+","+ap.get(i).squaresy+",";
-			if(ap.get(i).live)
-				s = s+"1);";
-			else
-				s = s+"0);";
-		}
-		return s;
-	}
 	
-	public String sendIntArrayAsString(int[] a)
-	{
-		String s = "";
-		for (int i = 0 ; i < a.length ; i++)
-		{
-			s = s + a[i] + ',';
-		}
-		return s;
-	}
 	
 	public void updateFromRival(String rcvd)
 	{
@@ -333,25 +316,46 @@ public class Main extends JFrame implements Runnable{
 		fpieces = str[1];
 		fpieces = fpieces.replace("\n" , "");
 		str = fpieces.split(";");
-		for(int i=0 ; i < str.length; i ++)
+		
+		if(ArmyGame.currentState == ArmyGame.DURINGGAME)
 		{
-			String[] substr;
-			substr = str[i].replace("(", "").replace(")", "").split(",");
-			game.arrayOfPieces.get(i+40).squaresx = 9 - Integer.parseInt(substr[0]);
-			game.arrayOfPieces.get(i+40).squaresy = 9 - Integer.parseInt(substr[1]);
-			if(Integer.parseInt(substr[2]) == 1 )
+			for(int i=0 ; i < str.length; i ++)
 			{
-				game.arrayOfPieces.get(i+40).live = true;
-				game.arrayOfPieces.get(i+40).label.setVisible(true);
-			}
-			else
-			{
-				game.arrayOfPieces.get(i).live = false;
-				game.arrayOfPieces.get(i).label.setVisible(false);
+				String[] substr;
+				substr = str[i].replace("(", "").replace(")", "").split(",");
+				game.arrayOfPieces.get(i+40).squaresx = 9 - Integer.parseInt(substr[0]);
+				game.arrayOfPieces.get(i+40).squaresy = 9 - Integer.parseInt(substr[1]);
+				if(Integer.parseInt(substr[2]) == 1 )
+				{
+					game.arrayOfPieces.get(i+40).live = true;
+				}
+				else
+				{
+					game.arrayOfPieces.get(i).live = false;
+				}
 			}
 		}
 		
-		
+	}
+	
+	public void receivedAttack(String attackmsg)
+	{
+		String[] str;
+		String[] substr1;
+		String[] substr2;
+		str = attackmsg.split("#");
+		str = str[1].split(";");
+		str[0] = str[0].replace("(", "").replace(")", "");
+		str[1] = str[1].replace("(", "").replace(")", "");
+		substr1 = str[0].split(",");
+		substr2 = str[1].split(",");
+		game.attackInfo[0] = Integer.parseInt(substr1[0]);
+		game.attackInfo[1] = Integer.parseInt(substr1[1]);
+		game.attackInfo[2] = Integer.parseInt(substr1[2]);
+		game.attackInfo[3] = Integer.parseInt(substr2[0]);
+		game.attackInfo[4] = Integer.parseInt(substr2[1]);
+		game.attackInfo[5] = Integer.parseInt(substr2[2]);
+		game.attackedByRival = true;
 	}
 	
 	public void autoPositionGame()
@@ -361,12 +365,11 @@ public class Main extends JFrame implements Runnable{
 			game.arrayOfPieces.get(i).squaresx = i%10;
 			game.arrayOfPieces.get(i).squaresy = i/10 + 6;
 			game.arrayOfPieces.get(i).live = true;
-			game.arrayOfPieces.get(i).label.setVisible(true);
-			game.updateRival = true;
 		}
 		for(int i = 0 ; i < 12 ; i++)
 		{
 			game.dead_pieces[i] = 0;
 		}
+		game.informUpdate();
 	}
 }
