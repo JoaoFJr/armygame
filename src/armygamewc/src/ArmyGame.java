@@ -41,6 +41,9 @@ public class ArmyGame extends JPanel implements Runnable {
 	public static JLabel right_lbl;
 	public static JLabel left_lbl;
 	
+	public static ImageIcon highlight_shadow;
+	public static JLabel rival_changed_lbl;
+	
 	public int[] attackInfo = new int[6];
 	public boolean updateRival = false;
 	public boolean attackedRival = false;
@@ -86,12 +89,19 @@ public class ArmyGame extends JPanel implements Runnable {
 		rival_blue_icon = new ImageIcon(getClass().getResource("blue_blank.png"));
 		rival_red_icon = new ImageIcon(getClass().getResource("red_blank.png"));
 		
+		highlight_shadow = new ImageIcon(getClass().getResource("golden_shadow.png"));
+		rival_changed_lbl = new JLabel(highlight_shadow);
+		rival_changed_lbl.setVisible(true);
+		rival_changed_lbl.setBounds(LAYOFFX -200 * SQFX +SQFX/2 - highlight_shadow.getIconWidth()/2, 
+				LAYOFFY + SQFY  + 2, highlight_shadow.getIconWidth(), highlight_shadow.getIconHeight());
+		
 		fieldPane = new JLayeredPane();
 		fieldPane.setPreferredSize(new Dimension(810 , 500));
 		fieldPane.setBorder(BorderFactory.createTitledBorder(
                 "Combate Field"));
 
 		fieldPane.add(fieldLabel , new Integer(1));
+		fieldPane.add(rival_changed_lbl , new Integer(10));
 		
 		add(fieldPane , BorderLayout.CENTER);
 		addButtonsToFieldPane();
@@ -1231,7 +1241,12 @@ MouseListener mal = new MouseListener() {
 		}
 		return s;
 	}
-	
+	public void setShadowPos(int cx , int cy)
+	{
+		rival_changed_lbl.setVisible(true);
+		rival_changed_lbl.setBounds(LAYOFFX + cx * SQFX +SQFX/2 - highlight_shadow.getIconWidth()/2, 
+				LAYOFFY + cy*SQFY  + 2, highlight_shadow.getIconWidth(), highlight_shadow.getIconHeight());
+	}
 	public String sendIntArrayAsString(int[] a)
 	{
 		String s = "";

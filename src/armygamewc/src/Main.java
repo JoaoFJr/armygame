@@ -333,8 +333,13 @@ public class Main extends JFrame implements Runnable{
 		{
 			for(int i=0 ; i < str.length; i ++)
 			{
+				int cx , cy;
+				boolean cl;
 				String[] substr;
 				substr = str[i].replace("(", "").replace(")", "").split(",");
+				cx = game.arrayOfPieces.get(i + 40).squaresx;
+				cy = game.arrayOfPieces.get(i + 40).squaresy;
+				cl = game.arrayOfPieces.get(i + 40).live;
 				game.arrayOfPieces.get(i+40).squaresx = 9 - Integer.parseInt(substr[0]);
 				game.arrayOfPieces.get(i+40).squaresy = 9 - Integer.parseInt(substr[1]);
 				if(Integer.parseInt(substr[2]) == 1 )
@@ -344,6 +349,13 @@ public class Main extends JFrame implements Runnable{
 				else
 				{
 					game.arrayOfPieces.get(i+40).live = false;
+				}
+				
+				if(((cx != game.arrayOfPieces.get(i + 40).squaresx)||
+						(cy != game.arrayOfPieces.get(i + 40).squaresy)||
+						(cl != game.arrayOfPieces.get(i + 40).live))&&(game.currentState == ArmyGame.DURINGGAME))
+				{
+					game.setShadowPos(cx , cy );
 				}
 			}
 		}

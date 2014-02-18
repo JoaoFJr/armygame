@@ -176,6 +176,9 @@ public class Piece
 					case ESPIAO:
 						enemy.live = false;
 						this.live = false;
+					case BOMBA:
+						enemy.live = false;
+						this.live = false;
 						break;
 					case BANDEIRA:
 						this.gotFlag = true;
@@ -198,6 +201,9 @@ public class Piece
 					case BANDEIRA:
 						this.gotFlag = true;
 						break;
+					case BOMBA:
+						enemy.live = false;
+						this.live = false;
 					default:
 						this.live = false;
 						break;	
@@ -247,6 +253,9 @@ public class Piece
 					case BANDEIRA:
 						this.gotFlag = true;
 						break;
+					case BOMBA:
+						enemy.live = false;
+						this.live = false;
 					default:
 						this.live = false;
 						break;
@@ -274,6 +283,9 @@ public class Piece
 					case BANDEIRA:
 						this.gotFlag = true;
 						break;
+					case BOMBA:
+						enemy.live = false;
+						this.live = false;
 					default:
 						this.live = false;
 						break;
@@ -299,6 +311,7 @@ public class Piece
 						this.live = false;
 						break;
 					case BOMBA:
+						enemy.live = false;
 						this.live = false;
 						break;
 					default:
@@ -323,6 +336,7 @@ public class Piece
 						this.live = false;
 						break;
 					case BOMBA:
+						enemy.live = false;
 						this.live = false;
 						break;
 					case BANDEIRA:
@@ -347,6 +361,7 @@ public class Piece
 						this.live = false;
 						break;
 					case BOMBA:
+						enemy.live = false;
 						this.live = false;
 						break;
 					case BANDEIRA:
@@ -367,6 +382,7 @@ public class Piece
 						this.live = false;
 						break;
 					case BOMBA:
+						enemy.live = false;
 						this.live = false;
 						break;
 					case BANDEIRA:
@@ -385,6 +401,7 @@ public class Piece
 						enemy.live = false;
 						break;
 					case BOMBA:
+						enemy.live = false;
 						this.live = false;
 						break;
 					case BANDEIRA:
