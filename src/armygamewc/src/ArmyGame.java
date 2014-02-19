@@ -23,6 +23,13 @@ public class ArmyGame extends JPanel implements Runnable {
 	public final static int WIDTH = 815;
 	public final static int HEIGHT = 630;
 	
+	public final static int UP = 0;
+	public final static int DOWN = 1;
+	public final static int RIGHT = 2;
+	public final static int LEFT = 3;
+	
+	public static int moved = -1;
+	
 	public static int action = MOVING;
 	public static int currentState = PREGAME;
 	public static int previousState = PREGAME;
@@ -173,7 +180,6 @@ public class ArmyGame extends JPanel implements Runnable {
 			@Override
 			public void mouseClicked(MouseEvent e) 
 			{
-				boolean moved = false;
 				Component c;
 				c = e.getComponent();
 				
@@ -181,37 +187,40 @@ public class ArmyGame extends JPanel implements Runnable {
 				{
 					Piece.highlighted.squaresy --;
 					
-					moved = true;
+					moved = UP;
 				}
 				else if(c == down_lbl )
 				{
 					Piece.highlighted.squaresy ++;
-					moved = true;
+					moved = DOWN;
 				}
 				if(c == right_lbl)
 				{
 					Piece.highlighted.squaresx ++;
-					moved =  true;
+					moved =  RIGHT;
 				}
 				else if(c == left_lbl)
 				{
 					Piece.highlighted.squaresx --;
-					moved = true;
+					moved = LEFT;
 				}
 				
-				if(moved)
+				if(moved != -1)
 				{
 					lastMovedPiece = Piece.highlighted;
 					if(Piece.highlighted.id == Piece.SOLDADO)
 					{
+						/*
 						if(JOptionPane.showConfirmDialog(sidePanel, "Esta peça pode mover mais\n " +
-								"de uma vez, deseja utilizar um possível\n" +
-								" movimento adicional? (Seu rival saberá que esta peça é um soldado)") != JOptionPane.YES_OPTION)
+								"de uma vez, deseja tentar um possível\n" +
+								" movimento adicional? (Seu rival poderá notar que esta peça é um soldado)") != JOptionPane.YES_OPTION)
 						{
 							lastMovedPiece = null;
 							action = ATTACKING;
 							hideMoveButtons();
+							moved = -1;
 						}
+						*/
 							
 					}
 					else
@@ -219,9 +228,11 @@ public class ArmyGame extends JPanel implements Runnable {
 						lastMovedPiece = null;
 						action = ATTACKING;
 						hideMoveButtons();
+						moved = -1;
 					}
 					informUpdate();
 				}
+				informUpdate();
 			}
 		};
 		
@@ -269,32 +280,36 @@ MouseListener mal = new MouseListener() {
 					if(c == up_atk_lbl)
 					{
 						used.squaresy--;
-						enemy = getEnemyPiece(used.squaresx , used.squaresy);
-						hideAttackLabels();
-						
-						used.attack(enemy);
-						
-						informUpdate();
-						
-						JOptionPane.showMessageDialog(sidePanel, "Seu "+used.details.getText()+" atacou este "+enemy.details.getText()+".\nA(s) peça(s) será(ão) removida(s) de acordo",
-								"Ataque ao inimigo!", JOptionPane.INFORMATION_MESSAGE, enemy.image);
-						
-						informAttack(used.id , used.squaresx , used.squaresy , enemy.id , enemy.squaresx , enemy.squaresy);
-						myTurn = false;
-						firstTurn= false;
 					}
 					else if(c == down_atk_lbl)
 					{
-						Piece.highlighted.squaresy ++;
+						used.squaresy ++;
 					}
 					else if(c == right_atk_lbl)
 					{
-						Piece.highlighted.squaresx ++;
+						used.squaresx ++;
 					}
 					else if(c == left_atk_lbl)
 					{
-						Piece.highlighted.squaresx --;
+						used.squaresx --;
 					}
+					enemy = getEnemyPiece(used.squaresx , used.squaresy);
+					
+					
+					JOptionPane.showMessageDialog(sidePanel, "Seu "+used.details.getText()+" atacou este "+enemy.details.getText()+".\nA(s) peça(s) será(ão) removida(s) de acordo",
+							"Ataque ao inimigo!", JOptionPane.INFORMATION_MESSAGE, enemy.image);
+					
+					hideAttackLabels();
+					finishedTurn= true;
+					used.attack(enemy);
+					if(!used.live)
+					{
+						dead_pieces[used.id]++;
+					}
+					myTurn = false;
+					informAttack(used.id , used.squaresx , used.squaresy , enemy.id , enemy.squaresx , enemy.squaresy);
+					finishedTurn = false;
+					firstTurn= false;
 				}
 			}
 		};
@@ -355,13 +370,16 @@ MouseListener mal = new MouseListener() {
 	}
 	public void informAttack(int uid , int ux , int uy , int eid , int ex , int ey)
 	{
+		buildCommandMsg();
 		buildAttackMsg(uid , ux , uy , eid , ex , ey );
-		attackedRival = true;
+		updtgame = updtgame+"@"+attackMsg;
+		updateRival = true;
+		
 		
 	}
 	public void buildAttackMsg(int uid , int ux , int uy , int eid , int ex , int ey )
 	{
-		attackMsg = "gotattack#";
+		attackMsg = "";
 		attackMsg = attackMsg+"("+uid+","+(9-ux)+","+(9-uy)+");";
 		attackMsg = attackMsg+"("+eid+","+(9-ex)+","+(9-ey)+")";
 	}
@@ -674,6 +692,15 @@ MouseListener mal = new MouseListener() {
 						Piece.highlighted = current;
 				}
 			}
+			else
+			{
+				current.update();
+				
+				current.label.setBounds(-100 * SQFX +SQFX/2 - current.image.getIconWidth()/2, 
+						LAYOFFY + current.squaresy*SQFY  + 2, current.image.getIconWidth(), current.image.getIconHeight());
+				current.details.setBounds(-100* SQFX +SQFX/2 - current.details.getText().length()* 7/2, 
+						LAYOFFY + current.squaresy*SQFY  + 2*SQFY/3 , current.details.getText().length()* 8 , current.image.getIconHeight()/3);
+			}
 			if(i > 39)
 			{
 				switch(current.team)
@@ -800,9 +827,111 @@ MouseListener mal = new MouseListener() {
 							case MOVING:
 								bmovs = checkGameMoves();
 								showButtons(bmovs);
-								break;
+								if(!(bmovs[0]||bmovs[1]||bmovs[2]||bmovs[3]))
+								{
+									if(moved == -1)
+									{
+										final Piece p = Piece.highlighted;
+										Piece.highlighted = null;
+										Runnable ra = new Runnable() {
+											
+											@Override
+											public void run() {
+												if(JOptionPane.showConfirmDialog(sidePanel, "Esta peça não pode ser movida.\n " +
+														"Deseja pular a fase de movimentação e tentar atacar com esta peça?")== JOptionPane.YES_OPTION)
+												{
+													
+													action = ATTACKING;
+													moved = -1;
+													Piece.highlighted = p;
+												}
+											}
+										};
+										
+										SwingUtilities.invokeLater(ra);
+									}
+									else
+									{
+										lastMovedPiece = null;
+										action = ATTACKING;
+										moved = -1;
+									}
+								}
+								else if(lastMovedPiece.id == Piece.SOLDADO)
+								{
+									
+									final Piece p = Piece.highlighted;
+									Piece.highlighted = null;
+									Runnable ra = new Runnable() {
+										public void run() {
+											if(JOptionPane.showConfirmDialog(sidePanel, "Esta peça pode mover mais\n " +
+													"de uma vez, deseja tentar um possível\n" +
+													" movimento adicional? (Seu rival poderá notar que esta peça é um soldado)") != JOptionPane.YES_OPTION)
+											{
+												lastMovedPiece = null;
+												action = ATTACKING;
+												hideMoveButtons();
+												moved = -1;
+											}
+											else
+											{
+												
+												switch(moved)
+												{
+													case UP:
+														p.squaresy--;
+														break;
+													case DOWN:
+														p.squaresy++;
+														break;
+													case RIGHT:
+														p.squaresx++;
+														break;
+													case LEFT:
+														p.squaresx--;
+														break;
+													default:
+															break;
+												}
+												informUpdate();
+											}
+										}
+										
+									};
+									ra.run();
+									Piece.highlighted = p;
+									
+									/*
+									if(JOptionPane.showConfirmDialog(sidePanel, "Esta peça pode mover mais\n " +
+											"de uma vez, deseja tentar um possível\n" +
+											" movimento adicional? (Seu rival poderá notar que esta peça é um soldado)") != JOptionPane.YES_OPTION)
+									{
+										lastMovedPiece = null;
+										action = ATTACKING;
+										hideMoveButtons();
+										moved = -1;
+									}
+									*/
+								}
 							case ATTACKING:
-								showAttackLabels(checkGameAttacks(Piece.highlighted.squaresx , Piece.highlighted.squaresy));
+								System.out.println(Piece.highlighted.squaresx +","+Piece.highlighted.squaresy);
+								if(!showAttackLabels(checkGameAttacks(Piece.highlighted.squaresx , Piece.highlighted.squaresy)))
+								{
+									Runnable r = new Runnable() {
+										
+										@Override
+										public void run() {
+											JOptionPane.showMessageDialog(sidePanel, "Não há mais ações possíveis para esta peça.\n Passando a vez ao adversário.");
+										}
+									};
+									SwingUtilities.invokeLater(r);
+									
+									myTurn = false;
+									finishedTurn = true;
+									informUpdate();
+									finishedTurn = false;
+									action = MOVING;
+								}
 								break;
 							default:
 									break;
@@ -812,13 +941,24 @@ MouseListener mal = new MouseListener() {
 					if((action == MOVING) && noPieceCanMove())
 					{
 						action = ATTACKING;
+						moved = -1;
 						hideMoveButtons();
 					}
 					if((action == ATTACKING) && noPieceCanAttack())
 					{
+						Runnable r = new Runnable() {
+							
+							@Override
+							public void run() {
+								JOptionPane.showMessageDialog(sidePanel, "Não há mais ações válidas para esta peça.\n Passando a vez ao adversário.");
+							}
+						};
+						SwingUtilities.invokeLater(r);
+						
 						myTurn = false;
+						finishedTurn = true;
 						informUpdate();
-						action = MOVING;
+						finishedTurn = false;
 					}
 					
 				}
@@ -829,17 +969,33 @@ MouseListener mal = new MouseListener() {
 					{
 						attackedByRival = false;
 						
-						if(attackInfo[0] != -1)
+						if(attackInfo[0] >= 0)
 						{
+							Piece enemy = getEnemyPiece(attackInfo[1], attackInfo[2]);
+							Piece ally = getAllyPiece(attackInfo[4], attackInfo[5]);
+							enemy.attack(ally);
+							if(!ally.live)
+							{
+								dead_pieces[ally.id]++;
+							}
 							showAttackMessage(attackInfo[0] , attackInfo[1] , attackInfo[2] , attackInfo[3] , attackInfo[4] , attackInfo[5]);
-							getEnemyPiece(attackInfo[1], attackInfo[2]).attack(getAllyPiece(attackInfo[4], attackInfo[5]));
+							
+							
 							myTurn = true;
 							action = MOVING;
 							piece.highlighted = null;
 						}
-						else
+						else if(attackInfo[0] == -2)
 						{
-							JOptionPane.showMessageDialog(sidePanel, "Agora começa o seu turno!");
+							Runnable r = new Runnable() {
+								
+								@Override
+								public void run() {
+									JOptionPane.showMessageDialog(sidePanel, "Agora começa o seu turno!");
+									System.out.println("Deve começar o turno");
+								}
+							};
+							SwingUtilities.invokeLater(r);
 							myTurn = true;
 							action = MOVING;
 							piece.highlighted = null;
@@ -847,6 +1003,14 @@ MouseListener mal = new MouseListener() {
 					}
 				}
 				previousState = DURINGGAME;
+				if(r_dead_pieces[0] > 0)
+				{
+					
+				}
+				else if(dead_pieces[0] > 0)
+				{
+					
+				}
 				break;
 			case FINISHINGGAME:
 				break;
@@ -969,6 +1133,7 @@ MouseListener mal = new MouseListener() {
 			break;
 		case Piece.CABOARMEIRO:
 			def = "Cabo Armeiro(3)";
+			break;
 		case Piece.SARGENTO:
 			def = "Sargento(4)";
 			break;
@@ -996,13 +1161,15 @@ MouseListener mal = new MouseListener() {
 		}
 		
 				
-		JOptionPane.showMessageDialog(sidePanel, "Um "+off+" inimigo atacou um dos "+def+" aliados" , "Inimigo atacou", JOptionPane.INFORMATION_MESSAGE, icon);
+		JOptionPane.showMessageDialog(sidePanel, "Um "+off+" inimigo atacou um dos "+def+" aliados\n" +
+				"As peças serão removidas de acordo." , "Inimigo atacou", JOptionPane.INFORMATION_MESSAGE, icon);
 		
 		
 	}
 	
-	public void showAttackLabels(boolean[] b)
+	public boolean showAttackLabels(boolean[] b)
 	{
+		boolean showAny = false;
 		Rectangle r = Piece.highlighted.label.getBounds();
 		if((Piece.highlighted.id != Piece.BOMBA)&&(Piece.highlighted.id != Piece.BANDEIRA))
 		{
@@ -1010,6 +1177,7 @@ MouseListener mal = new MouseListener() {
 			{
 				up_atk_lbl.setBounds(r.x - (atk_icon.getIconWidth()-Piece.highlighted.image.getIconWidth())/2 , r.y - atk_icon.getIconHeight() , atk_icon.getIconWidth() , atk_icon.getIconHeight());
 				up_atk_lbl.setVisible(true);
+				showAny = true;
 			}
 			else
 			{
@@ -1021,6 +1189,7 @@ MouseListener mal = new MouseListener() {
 			{
 				down_atk_lbl.setBounds(r.x - (atk_icon.getIconWidth()-Piece.highlighted.image.getIconWidth())/2, r.y + Piece.highlighted.image.getIconHeight() , atk_icon.getIconWidth() , atk_icon.getIconHeight());
 				down_atk_lbl.setVisible(true);
+				showAny = true;
 			}
 			else
 			{
@@ -1031,6 +1200,7 @@ MouseListener mal = new MouseListener() {
 			{
 				right_atk_lbl.setBounds(r.x+Piece.highlighted.image.getIconWidth() , r.y - (atk_icon.getIconHeight()-Piece.highlighted.image.getIconHeight())/2  , atk_icon.getIconWidth() , atk_icon.getIconHeight());
 				right_atk_lbl.setVisible(true);
+				showAny = true;
 			}
 			else
 			{
@@ -1041,6 +1211,7 @@ MouseListener mal = new MouseListener() {
 			{
 				left_atk_lbl.setBounds(r.x-atk_icon.getIconWidth() , r.y - (atk_icon.getIconHeight()-Piece.highlighted.image.getIconHeight())/2, atk_icon.getIconWidth() , atk_icon.getIconHeight());
 				left_atk_lbl.setVisible(true);
+				showAny = true;
 			}
 			else
 			{
@@ -1052,20 +1223,15 @@ MouseListener mal = new MouseListener() {
 		{
 			hideAttackLabels();
 		}
+		return showAny;
 	}
 	
 	public boolean[] checkGameAttacks( int x , int y)
 	{
-		boolean[] nearbyMoves;
-
-		nearbyMoves = nearbyField(x, y);
-		for(int i = 0 ; i < nearbyMoves.length ; i++)
+		boolean[] nearbyMoves = new boolean[4];
+		for(int i = 0 ; i < 4 ; i++)
 		{
-			nearbyMoves[i] = !nearbyMoves[i];
-			if(nearbyMoves[i] == true)
-			{
-				nearbyMoves[i] = checkForEnemy(x , y , i);
-			}
+			nearbyMoves[i] = checkForEnemy(x , y , i);
 		}
 		return nearbyMoves;
 	}
@@ -1189,9 +1355,37 @@ MouseListener mal = new MouseListener() {
 	
 	public boolean[] checkGameMoves()
 	{
-		boolean[] nearbyMoves;
+		boolean[] nearbyMoves = new boolean[4];
 
 		nearbyMoves = nearbyField(Piece.highlighted.squaresx , Piece.highlighted.squaresy);
+		if(lastMovedPiece != null && lastMovedPiece.id == Piece.SOLDADO)
+		{
+			switch(moved)
+			{
+				case UP:
+					nearbyMoves[DOWN] = false;
+					nearbyMoves[RIGHT] = false;
+					nearbyMoves[LEFT] = false;
+					break;
+				case DOWN:
+					nearbyMoves[UP] = false;
+					nearbyMoves[RIGHT] = false;
+					nearbyMoves[LEFT] = false;
+					break;
+				case RIGHT:
+					nearbyMoves[UP] = false;
+					nearbyMoves[DOWN] = false;
+					nearbyMoves[LEFT] = false;
+					break;
+				case LEFT:
+					nearbyMoves[UP] = false;
+					nearbyMoves[DOWN] = false;
+					nearbyMoves[RIGHT] = false;
+					break;
+				default:
+						break;
+			}
+		}
 		return nearbyMoves;
 			
 	}
@@ -1254,7 +1448,6 @@ MouseListener mal = new MouseListener() {
 		updtgame = updtgame+sendIntArrayAsString(dead_pieces);
 		updtgame = updtgame+"@";
 		updtgame = updtgame+sendPieceArrayListAsString(arrayOfPieces , 0);
-		updtgame = updtgame+"\n";
 	}
 	
 	public String sendPieceArrayListAsString(ArrayList<Piece> ap , int type)
@@ -1303,6 +1496,11 @@ MouseListener mal = new MouseListener() {
 	public void informUpdate()
 	{
 		buildCommandMsg();
+		if(finishedTurn)
+			buildAttackMsg(-2, -1, -1, -1, -1, -1);
+		else
+			buildAttackMsg(-1 , -1 , -1 , -1 , -1 , -1);
+		updtgame = updtgame+"@"+attackMsg;
 		updateRival = true;
 	}
 }

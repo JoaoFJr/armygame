@@ -241,12 +241,6 @@ public class Main extends JFrame implements Runnable{
 						updateFromRival(ConnectionSide.toShow);
 						ConnectionSide.toShow = "";
 					}
-					else if(ConnectionSide.toShow.startsWith("gotattack#"))
-					{
-						chat.toShow = ConnectionSide.toShow;
-						receivedAttack(ConnectionSide.toShow);
-						ConnectionSide.toShow = "";
-					}
 					else
 					{
 						Chat.toShow = ConnectionSide.toShow;
@@ -315,6 +309,7 @@ public class Main extends JFrame implements Runnable{
 		String[] str;
 		String dpieces;
 		String fpieces;
+		String finish;
 		str = rcvd.split("#"); // divide a string e pega a parte interessante (lado direito)
 		dpieces = str[1];
 		
@@ -326,6 +321,7 @@ public class Main extends JFrame implements Runnable{
 			game.r_dead_pieces[i] = Integer.parseInt(dpieces.substring(i , i+1));
 		}
 		fpieces = str[1];
+		finish = str[2];
 		fpieces = fpieces.replace("\n" , "");
 		str = fpieces.split(";");
 		
@@ -359,6 +355,7 @@ public class Main extends JFrame implements Runnable{
 				}
 			}
 		}
+		receivedAttack(finish);
 		
 	}
 	
@@ -368,9 +365,9 @@ public class Main extends JFrame implements Runnable{
 		String[] substr1;
 		String[] substr2;
 		
+		System.out.println(attackmsg);
 		
-		str = attackmsg.split("#");
-		str = str[1].split(";");
+		str = attackmsg.split(";");
 		str[0] = str[0].replace("(", "").replace(")", "");
 		str[1] = str[1].replace("(", "").replace(")", "");
 		substr1 = str[0].split(",");
@@ -382,8 +379,14 @@ public class Main extends JFrame implements Runnable{
 		game.attackInfo[4] = Integer.parseInt(substr2[1]);
 		game.attackInfo[5] = Integer.parseInt(substr2[2]);
 		
-		
-		game.attackedByRival = true;
+		if(game.attackInfo[0] == -2)
+		{
+			game.attackedByRival = true;
+		}
+		else if(game.attackInfo[0] != -1)
+		{
+			game.attackedByRival = true;
+		}
 	}
 	
 	

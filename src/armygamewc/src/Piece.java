@@ -153,7 +153,9 @@ public class Piece
 			label.setVisible(true);
 		}
 		else
+		{
 			label.setVisible(false);
+		}
 	}
 	
 	public void attack(Piece enemy)
@@ -182,6 +184,7 @@ public class Piece
 						break;
 					case BANDEIRA:
 						this.gotFlag = true;
+						enemy.live = false;
 						break;
 					default:
 						this.live = false;
@@ -200,6 +203,7 @@ public class Piece
 						break;
 					case BANDEIRA:
 						this.gotFlag = true;
+						enemy.live = false;
 						break;
 					case BOMBA:
 						enemy.live = false;
@@ -225,6 +229,7 @@ public class Piece
 						break;
 					case BANDEIRA:
 						this.gotFlag = true;
+						enemy.live = false;
 						break;
 					case BOMBA:
 						enemy.live = false;
@@ -252,6 +257,7 @@ public class Piece
 						break;
 					case BANDEIRA:
 						this.gotFlag = true;
+						enemy.live = false;
 						break;
 					case BOMBA:
 						enemy.live = false;
@@ -282,6 +288,7 @@ public class Piece
 						break;
 					case BANDEIRA:
 						this.gotFlag = true;
+						enemy.live = false;
 						break;
 					case BOMBA:
 						enemy.live = false;
@@ -309,6 +316,10 @@ public class Piece
 						break;
 					case MARECHAL:
 						this.live = false;
+						break;
+					case BANDEIRA:
+						this.gotFlag = true;
+						enemy.live = false;
 						break;
 					case BOMBA:
 						enemy.live = false;
@@ -341,6 +352,7 @@ public class Piece
 						break;
 					case BANDEIRA:
 						this.gotFlag = true;
+						enemy.live = false;
 						break;
 					default:
 						enemy.live = false;
@@ -366,6 +378,7 @@ public class Piece
 						break;
 					case BANDEIRA:
 						this.gotFlag = true;
+						enemy.live = false;
 						break;
 					default:
 						break;
@@ -387,6 +400,7 @@ public class Piece
 						break;
 					case BANDEIRA:
 						this.gotFlag = true;
+						enemy.live = false;
 						break;
 					default:
 						enemy.live = false;
@@ -406,6 +420,7 @@ public class Piece
 						break;
 					case BANDEIRA:
 						this.gotFlag = true;
+						enemy.live = false;
 						break;
 					default:
 						enemy.live = false;
