@@ -32,6 +32,8 @@ public class ArmyGame extends JPanel implements Runnable {
 	public static ImageIcon field;
 	public static Piece piece;
 	
+	public static boolean firstTurn = false;
+	
 	public static ImageIcon up_icon;
 	public static ImageIcon down_icon;
 	public static ImageIcon right_icon;
@@ -202,7 +204,7 @@ public class ArmyGame extends JPanel implements Runnable {
 					lastMovedPiece = Piece.highlighted;
 					if(Piece.highlighted.id == Piece.SOLDADO)
 					{
-						if(JOptionPane.showConfirmDialog(null, "Esta peça pode mover mais\n " +
+						if(JOptionPane.showConfirmDialog(sidePanel, "Esta peça pode mover mais\n " +
 								"de uma vez, deseja utilizar um possível\n" +
 								" movimento adicional? (Seu rival saberá que esta peça é um soldado)") != JOptionPane.YES_OPTION)
 						{
@@ -274,11 +276,12 @@ MouseListener mal = new MouseListener() {
 						
 						informUpdate();
 						
-						JOptionPane.showMessageDialog(null, "Você Atacou este inimigo.\nA(s) peça(s) será(ão) removida(s) de acordo",
+						JOptionPane.showMessageDialog(sidePanel, "Seu "+used.details.getText()+" atacou este "+enemy.details.getText()+".\nA(s) peça(s) será(ão) removida(s) de acordo",
 								"Ataque ao inimigo!", JOptionPane.INFORMATION_MESSAGE, enemy.image);
 						
 						informAttack(used.id , used.squaresx , used.squaresy , enemy.id , enemy.squaresx , enemy.squaresy);
-						
+						myTurn = false;
+						firstTurn= false;
 					}
 					else if(c == down_atk_lbl)
 					{
@@ -425,7 +428,7 @@ MouseListener mal = new MouseListener() {
 	{
 		for(int i = 0; i < arrayOfPieces.size() ; i++)
 		{
-			if((arrayOfPieces.get(i).squaresx == tab_x)&&(arrayOfPieces.get(i).squaresy == tab_y))
+			if((arrayOfPieces.get(i).squaresx == tab_x)&&(arrayOfPieces.get(i).squaresy == tab_y)&&(arrayOfPieces.get(i).live == true))
 				return false;
 			else if(((tab_x == 2)||(tab_x==3)||(tab_x==6)||(tab_x==7))&&((tab_y == 4)||(tab_y==5))) // lake positions
 			{
@@ -771,11 +774,11 @@ MouseListener mal = new MouseListener() {
 					if(arrayOfPieces.get(0).team == Piece.RED)
 					{
 						myTurn = true;
-						JOptionPane.showMessageDialog(null, "Você Iniciará o jogo! Boa sorte!");
+						JOptionPane.showMessageDialog(sidePanel, "Você Iniciará o jogo! Boa sorte!");
 					}
 					else
 					{
-						JOptionPane.showMessageDialog(null, "Seu rival iniciará o jogo! Boa sorte!");
+						JOptionPane.showMessageDialog(sidePanel, "Seu rival iniciará o jogo! Boa sorte!");
 					}
 				}
 				previousState = PREGAME;
@@ -806,15 +809,41 @@ MouseListener mal = new MouseListener() {
 						}
 					}
 					
+					if((action == MOVING) && noPieceCanMove())
+					{
+						action = ATTACKING;
+						hideMoveButtons();
+					}
+					if((action == ATTACKING) && noPieceCanAttack())
+					{
+						myTurn = false;
+						informUpdate();
+						action = MOVING;
+					}
+					
 				}
 				else
 				{
+					firstTurn = true;
 					if(attackedByRival)
 					{
 						attackedByRival = false;
 						
-						showAttackMessage(attackInfo[0] , attackInfo[1] , attackInfo[2] , attackInfo[3] , attackInfo[4] , attackInfo[5]);
-						getEnemyPiece(attackInfo[1], attackInfo[2]).attack(getAllyPiece(attackInfo[4], attackInfo[5]));
+						if(attackInfo[0] != -1)
+						{
+							showAttackMessage(attackInfo[0] , attackInfo[1] , attackInfo[2] , attackInfo[3] , attackInfo[4] , attackInfo[5]);
+							getEnemyPiece(attackInfo[1], attackInfo[2]).attack(getAllyPiece(attackInfo[4], attackInfo[5]));
+							myTurn = true;
+							action = MOVING;
+							piece.highlighted = null;
+						}
+						else
+						{
+							JOptionPane.showMessageDialog(sidePanel, "Agora começa o seu turno!");
+							myTurn = true;
+							action = MOVING;
+							piece.highlighted = null;
+						}
 					}
 				}
 				previousState = DURINGGAME;
@@ -927,7 +956,7 @@ MouseListener mal = new MouseListener() {
 			break;
 		}
 		
-		switch(eid)
+		switch(mid)
 		{
 		case Piece.BANDEIRA:
 			def = "Bandeira";
@@ -967,7 +996,7 @@ MouseListener mal = new MouseListener() {
 		}
 		
 				
-		JOptionPane.showMessageDialog(fieldPane, "Um "+off+" inimigo atacou um dos "+def+" aliados" , "Inimigo atacou", JOptionPane.INFORMATION_MESSAGE, icon);
+		JOptionPane.showMessageDialog(sidePanel, "Um "+off+" inimigo atacou um dos "+def+" aliados" , "Inimigo atacou", JOptionPane.INFORMATION_MESSAGE, icon);
 		
 		
 	}
@@ -1074,6 +1103,20 @@ MouseListener mal = new MouseListener() {
 			return true;
 		else
 			return false;
+	}
+	
+	public boolean noPieceCanAttack()
+	{
+		boolean[] b = new boolean[4];
+		{
+			for(int i = 0; i < arrayOfPieces.size()/2 ; i++)
+			{
+				b = checkGameAttacks(arrayOfPieces.get(i).squaresx , arrayOfPieces.get(i).squaresy);
+				if(b[0] || b[1] || b[2] || b[3])
+					return false;
+			}
+		}
+		return true;
 	}
 	
 	public boolean noPieceCanMove()

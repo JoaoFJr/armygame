@@ -353,7 +353,7 @@ public class Main extends JFrame implements Runnable{
 				
 				if(((cx != game.arrayOfPieces.get(i + 40).squaresx)||
 						(cy != game.arrayOfPieces.get(i + 40).squaresy)||
-						(cl != game.arrayOfPieces.get(i + 40).live))&&(game.currentState == ArmyGame.DURINGGAME))
+						(cl != game.arrayOfPieces.get(i + 40).live))&&(game.firstTurn)&&(game.myTurn == false))
 				{
 					game.setShadowPos(cx , cy );
 				}
