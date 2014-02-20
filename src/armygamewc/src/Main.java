@@ -72,10 +72,6 @@ public class Main extends JFrame implements Runnable{
 		{
 			
 			public void actionPerformed(ActionEvent e) {
-			//	connectionSide.runServer();
-			//	chat.setOutput(connectionSide.getOutput());
-			//	startGame.setEnabled(false);
-			//	stopMenu.setEnabled(true);
 				
 				System.out.println("Iniciar como servidor: "+e.getActionCommand());
 				ConnectionSide.connectionStatus = ConnectionSide.BEGIN_CONNECT;
@@ -85,7 +81,6 @@ public class Main extends JFrame implements Runnable{
 					
 					@Override
 					public void run() {
-						// TODO Auto-generated method stub
 						connectionSide.runServer();
 						
 					}
